@@ -1,0 +1,94 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Dependency directories (remove the comment below to include it)
+vendor/
+
+# Go workspace file
+go.work
+
+# Build output
+/bin/
+/dist/
+main
+loki-backend
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+*.env
+
+# Ignore .env but keep .env.example
+!.env.example
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# OS generated files
+Thumbs.db
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Logs
+*.log
+logs/
+*.log.*
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Docker
+docker-compose.override.yml
+
+# Air (live reload for Go)
+tmp/
+.air.toml
+
+# Debug
+__debug_bin
+
+# Coverage
+coverage.txt
+coverage.html
+*.cover
+
+# Profiling
+*.prof
+*.pprof
+
+# Migration state (if using certain migration tools)
+.migrate/
+
+# Local development
+local/
+.local/
+
+# Test cache
+.cache/
+
+# GoReleaser
+dist/
