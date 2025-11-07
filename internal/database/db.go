@@ -230,6 +230,29 @@ func (db *Database) RunMigrations(ctx context.Context) error {
 				CREATE INDEX IF NOT EXISTS idx_workflow_nodes_template_id ON workflow_nodes(template_id);
 			`,
 		},
+		{
+			name: "006_create_workflow_runs_table",
+			sql: `
+				-- Create workflow_runs table
+				CREATE TABLE IF NOT EXISTS workflow_runs (
+					id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+					workflow_id UUID NOT NULL REFERENCES workflows(id) ON DELETE CASCADE,
+					status VARCHAR(50) NOT NULL DEFAULT 'pending',
+					started_at TIMESTAMPTZ,
+					finished_at TIMESTAMPTZ,
+					created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+					updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+					CONSTRAINT chk_workflow_run_status CHECK (
+						status IN ('pending', 'running', 'completed', 'failed', 'cancelled')
+					)
+				);
+
+				-- Create indexes for workflow_runs
+				CREATE INDEX IF NOT EXISTS idx_workflow_runs_workflow_id ON workflow_runs(workflow_id);
+				CREATE INDEX IF NOT EXISTS idx_workflow_runs_status ON workflow_runs(status);
+				CREATE INDEX IF NOT EXISTS idx_workflow_runs_started_at ON workflow_runs(started_at DESC);
+			`,
+		},
 	}
 
 	// Execute migrations in order

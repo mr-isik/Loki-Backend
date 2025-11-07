@@ -9,7 +9,7 @@ import (
 )
 
 // SetupRoutes configures all application routes
-func SetupRoutes(app *fiber.App, userHandler *handler.UserHandler, workspaceHandler *handler.WorkspaceHandler, workflowHandler *handler.WorkflowHandler, workflowEdgeHandler *handler.WorkflowEdgeHandler, workflowNodeHandler *handler.WorkflowNodeHandler, nodeTemplateHandler *handler.NodeTemplateHandler) {
+func SetupRoutes(app *fiber.App, userHandler *handler.UserHandler, workspaceHandler *handler.WorkspaceHandler, workflowHandler *handler.WorkflowHandler, workflowEdgeHandler *handler.WorkflowEdgeHandler, workflowNodeHandler *handler.WorkflowNodeHandler, nodeTemplateHandler *handler.NodeTemplateHandler, workflowRunHandler *handler.WorkflowRunHandler) {
 	// Middleware
 	app.Use(recover.New())
 	app.Use(logger.New(logger.Config{
@@ -60,6 +60,8 @@ func SetupRoutes(app *fiber.App, userHandler *handler.UserHandler, workspaceHand
 	workflows.Post("/:id/archive", workflowHandler.ArchiveWorkflow)
 	workflows.Get("/:workflow_id/edges", workflowEdgeHandler.GetWorkflowEdgesByWorkflow)
 	workflows.Get("/:workflow_id/nodes", workflowNodeHandler.GetWorkflowNodes)
+	workflows.Post("/:workflow_id/runs", workflowRunHandler.StartWorkflowRun)
+	workflows.Get("/:workflow_id/runs", workflowRunHandler.ListWorkflowRuns)
 
 	// Workflow Edge routes
 	edges := api.Group("/workflow-edges")
@@ -74,6 +76,11 @@ func SetupRoutes(app *fiber.App, userHandler *handler.UserHandler, workspaceHand
 	nodes.Get("/:id", workflowNodeHandler.GetWorkflowNode)
 	nodes.Put("/:id", workflowNodeHandler.UpdateWorkflowNode)
 	nodes.Delete("/:id", workflowNodeHandler.DeleteWorkflowNode)
+
+	// Workflow Run routes
+	workflowRuns := api.Group("/workflow-runs")
+	workflowRuns.Get("/:id", workflowRunHandler.GetWorkflowRun)
+	workflowRuns.Patch("/:id/status", workflowRunHandler.UpdateWorkflowRunStatus)
 
 	// Node Template routes
 	nodeTemplates := api.Group("/node-templates")
