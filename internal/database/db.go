@@ -191,6 +191,27 @@ func (db *Database) RunMigrations(ctx context.Context) error {
 				ON CONFLICT (type_key) DO NOTHING;
 			`,
 		},
+		{
+			name: "004_create_workflow_edges_table",
+			sql: `
+				-- Create workflow_edges table
+				CREATE TABLE IF NOT EXISTS workflow_edges (
+					id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+					workflow_id UUID NOT NULL REFERENCES workflows(id) ON DELETE CASCADE,
+					source_node_id UUID NOT NULL,
+					target_node_id UUID NOT NULL,
+					source_handle VARCHAR(255) NOT NULL,
+					target_handle VARCHAR(255) NOT NULL,
+					created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+					updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+				);
+
+				-- Create indexes for workflow_edges
+				CREATE INDEX IF NOT EXISTS idx_workflow_edges_workflow_id ON workflow_edges(workflow_id);
+				CREATE INDEX IF NOT EXISTS idx_workflow_edges_source_node ON workflow_edges(source_node_id);
+				CREATE INDEX IF NOT EXISTS idx_workflow_edges_target_node ON workflow_edges(target_node_id);
+			`,
+		},
 	}
 
 	// Execute migrations in order
