@@ -6,7 +6,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/mr-isik/loki-backend/internal/domain"
-	"github.com/mr-isik/loki-backend/internal/service"
 )
 
 type UserHandler struct {
@@ -32,9 +31,9 @@ func (h *UserHandler) CreateUser(c *fiber.Ctx) error {
 		})
 	}
 
-	user, err := h.service.CreateUser(c.Context(), &req)
+	_, err := h.service.CreateUser(c.Context(), &req)
 	if err != nil {
-		if errors.Is(err, service.ErrUserExists) {
+		if errors.Is(err, domain.ErrUserAlreadyExists) {
 			return c.Status(fiber.StatusConflict).JSON(ErrorResponse{
 				Error:   "user_exists",
 				Message: "User with this email already exists",
@@ -46,7 +45,7 @@ func (h *UserHandler) CreateUser(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(user)
+	return c.SendStatus(fiber.StatusNoContent)
 }
 
 // GetUser handles retrieving a user by ID
@@ -98,7 +97,7 @@ func (h *UserHandler) UpdateUser(c *fiber.Ctx) error {
 		})
 	}
 
-	user, err := h.service.UpdateUser(c.Context(), id, &req)
+	_, err = h.service.UpdateUser(c.Context(), id, &req)
 	if err != nil {
 		if errors.Is(err, domain.ErrUserNotFound) {
 			return c.Status(fiber.StatusNotFound).JSON(ErrorResponse{
@@ -106,7 +105,7 @@ func (h *UserHandler) UpdateUser(c *fiber.Ctx) error {
 				Message: "User not found",
 			})
 		}
-		if errors.Is(err, service.ErrUserExists) {
+		if errors.Is(err, domain.ErrUserAlreadyExists) {
 			return c.Status(fiber.StatusConflict).JSON(ErrorResponse{
 				Error:   "email_taken",
 				Message: "Email is already taken",
@@ -118,7 +117,7 @@ func (h *UserHandler) UpdateUser(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.JSON(user)
+	return c.SendStatus(fiber.StatusNoContent)
 }
 
 // DeleteUser handles deleting a user

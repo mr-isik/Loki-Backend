@@ -56,7 +56,7 @@ func (h *WorkflowHandler) CreateWorkflow(c *fiber.Ctx) error {
 		})
 	}
 
-	workflow, err := h.service.CreateWorkflow(c.Context(), workspaceID, userID, &req)
+	_, err = h.service.CreateWorkflow(c.Context(), workspaceID, userID, &req)
 	if err != nil {
 		if errors.Is(err, domain.ErrUnauthorized) {
 			return c.Status(fiber.StatusForbidden).JSON(ErrorResponse{
@@ -70,7 +70,7 @@ func (h *WorkflowHandler) CreateWorkflow(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(workflow)
+	return c.SendStatus(fiber.StatusNoContent)
 }
 
 // GetWorkflow handles retrieving a workflow by ID
@@ -221,7 +221,7 @@ func (h *WorkflowHandler) UpdateWorkflow(c *fiber.Ctx) error {
 		})
 	}
 
-	workflow, err := h.service.UpdateWorkflow(c.Context(), id, userID, &req)
+	_, err = h.service.UpdateWorkflow(c.Context(), id, userID, &req)
 	if err != nil {
 		if errors.Is(err, domain.ErrWorkflowNotFound) {
 			return c.Status(fiber.StatusNotFound).JSON(ErrorResponse{
@@ -241,7 +241,7 @@ func (h *WorkflowHandler) UpdateWorkflow(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.JSON(workflow)
+	return c.SendStatus(fiber.StatusNoContent)
 }
 
 // DeleteWorkflow handles deleting a workflow

@@ -49,7 +49,7 @@ func (h *WorkspaceHandler) CreateWorkspace(c *fiber.Ctx) error {
 		})
 	}
 
-	workspace, err := h.service.CreateWorkspace(c.Context(), userID, &req)
+	_, err = h.service.CreateWorkspace(c.Context(), userID, &req)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{
 			Error:   "internal_error",
@@ -57,7 +57,7 @@ func (h *WorkspaceHandler) CreateWorkspace(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(workspace)
+	return c.SendStatus(fiber.StatusNoContent)
 }
 
 // GetWorkspace handles retrieving a workspace by ID
@@ -185,7 +185,7 @@ func (h *WorkspaceHandler) UpdateWorkspace(c *fiber.Ctx) error {
 		})
 	}
 
-	workspace, err := h.service.UpdateWorkspace(c.Context(), id, userID, &req)
+	_, err = h.service.UpdateWorkspace(c.Context(), id, userID, &req)
 	if err != nil {
 		if errors.Is(err, domain.ErrWorkspaceNotFound) {
 			return c.Status(fiber.StatusNotFound).JSON(ErrorResponse{
@@ -205,7 +205,7 @@ func (h *WorkspaceHandler) UpdateWorkspace(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.JSON(workspace)
+	return c.SendStatus(fiber.StatusNoContent)
 }
 
 // DeleteWorkspace handles deleting a workspace
