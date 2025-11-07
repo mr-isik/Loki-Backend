@@ -9,7 +9,7 @@ import (
 )
 
 // SetupRoutes configures all application routes
-func SetupRoutes(app *fiber.App, userHandler *handler.UserHandler, workspaceHandler *handler.WorkspaceHandler, workflowHandler *handler.WorkflowHandler, workflowEdgeHandler *handler.WorkflowEdgeHandler, workflowNodeHandler *handler.WorkflowNodeHandler) {
+func SetupRoutes(app *fiber.App, userHandler *handler.UserHandler, workspaceHandler *handler.WorkspaceHandler, workflowHandler *handler.WorkflowHandler, workflowEdgeHandler *handler.WorkflowEdgeHandler, workflowNodeHandler *handler.WorkflowNodeHandler, nodeTemplateHandler *handler.NodeTemplateHandler) {
 	// Middleware
 	app.Use(recover.New())
 	app.Use(logger.New(logger.Config{
@@ -74,6 +74,11 @@ func SetupRoutes(app *fiber.App, userHandler *handler.UserHandler, workspaceHand
 	nodes.Get("/:id", workflowNodeHandler.GetWorkflowNode)
 	nodes.Put("/:id", workflowNodeHandler.UpdateWorkflowNode)
 	nodes.Delete("/:id", workflowNodeHandler.DeleteWorkflowNode)
+
+	// Node Template routes
+	nodeTemplates := api.Group("/node-templates")
+	nodeTemplates.Get("/", nodeTemplateHandler.ListNodeTemplates)
+	nodeTemplates.Get("/:id", nodeTemplateHandler.GetNodeTemplate)
 
 	// 404 handler
 	app.Use(func(c *fiber.Ctx) error {

@@ -182,10 +182,8 @@ func (db *Database) RunMigrations(ctx context.Context) error {
 				
 				-- Insert default node templates
 				INSERT INTO node_templates (name, description, type_key, category) VALUES
-					('Start Node', 'Entry point of the workflow', 'start', 'control'),
-					('End Node', 'Exit point of the workflow', 'end', 'control'),
 					('HTTP Request', 'Make HTTP requests to external APIs', 'http_request', 'integration'),
-					('Data Transform', 'Transform and manipulate data', 'transform', 'data'),
+					('Shell Command', 'Execute shell commands', 'shell_command', 'utility'),
 					('Condition', 'Conditional branching based on data', 'condition', 'control'),
 					('Loop', 'Iterate over data collections', 'loop', 'control')
 				ON CONFLICT (type_key) DO NOTHING;
