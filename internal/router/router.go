@@ -9,7 +9,7 @@ import (
 )
 
 // SetupRoutes configures all application routes
-func SetupRoutes(app *fiber.App, userHandler *handler.UserHandler, workspaceHandler *handler.WorkspaceHandler, workflowHandler *handler.WorkflowHandler, workflowEdgeHandler *handler.WorkflowEdgeHandler, workflowNodeHandler *handler.WorkflowNodeHandler, nodeTemplateHandler *handler.NodeTemplateHandler, workflowRunHandler *handler.WorkflowRunHandler) {
+func SetupRoutes(app *fiber.App, userHandler *handler.UserHandler, workspaceHandler *handler.WorkspaceHandler, workflowHandler *handler.WorkflowHandler, workflowEdgeHandler *handler.WorkflowEdgeHandler, workflowNodeHandler *handler.WorkflowNodeHandler, nodeTemplateHandler *handler.NodeTemplateHandler, workflowRunHandler *handler.WorkflowRunHandler, nodeRunLogHandler *handler.NodeRunLogHandler) {
 	// Middleware
 	app.Use(recover.New())
 	app.Use(logger.New(logger.Config{
@@ -81,6 +81,13 @@ func SetupRoutes(app *fiber.App, userHandler *handler.UserHandler, workspaceHand
 	workflowRuns := api.Group("/workflow-runs")
 	workflowRuns.Get("/:id", workflowRunHandler.GetWorkflowRun)
 	workflowRuns.Patch("/:id/status", workflowRunHandler.UpdateWorkflowRunStatus)
+	workflowRuns.Get("/:run_id/logs", nodeRunLogHandler.GetNodeRunLogsByRunID)
+
+	// Node Run Log routes
+	nodeRunLogs := api.Group("/node-run-logs")
+	nodeRunLogs.Post("/", nodeRunLogHandler.CreateNodeRunLog)
+	nodeRunLogs.Get("/:id", nodeRunLogHandler.GetNodeRunLog)
+	nodeRunLogs.Patch("/:id", nodeRunLogHandler.UpdateNodeRunLog)
 
 	// Node Template routes
 	nodeTemplates := api.Group("/node-templates")

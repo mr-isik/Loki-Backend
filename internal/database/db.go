@@ -253,6 +253,30 @@ func (db *Database) RunMigrations(ctx context.Context) error {
 				CREATE INDEX IF NOT EXISTS idx_workflow_runs_started_at ON workflow_runs(started_at DESC);
 			`,
 		},
+		{
+			name: "007_create_node_run_logs_table",
+			sql: `
+				-- Create node_run_logs table
+				CREATE TABLE IF NOT EXISTS node_run_logs (
+					id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+					run_id UUID NOT NULL REFERENCES workflow_runs(id) ON DELETE CASCADE,
+					node_id UUID NOT NULL REFERENCES workflow_nodes(id) ON DELETE CASCADE,
+					status VARCHAR(50) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'running', 'completed', 'failed', 'skipped')),
+					log_output TEXT,
+					error_msg TEXT,
+					started_at TIMESTAMP NOT NULL DEFAULT NOW(),
+					finished_at TIMESTAMP,
+					created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+					updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+				);
+
+				-- Create indexes for node_run_logs
+				CREATE INDEX IF NOT EXISTS idx_node_run_logs_run_id ON node_run_logs(run_id);
+				CREATE INDEX IF NOT EXISTS idx_node_run_logs_node_id ON node_run_logs(node_id);
+				CREATE INDEX IF NOT EXISTS idx_node_run_logs_status ON node_run_logs(status);
+				CREATE INDEX IF NOT EXISTS idx_node_run_logs_started_at ON node_run_logs(started_at DESC);
+			`,
+		},
 	}
 
 	// Execute migrations in order
