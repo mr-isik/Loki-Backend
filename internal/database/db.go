@@ -88,7 +88,7 @@ func (db *Database) Close() {
 func (db *Database) Health() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
-	
+
 	return db.Pool.Ping(ctx)
 }
 
@@ -282,11 +282,11 @@ func (db *Database) RunMigrations(ctx context.Context) error {
 	// Execute migrations in order
 	for _, migration := range migrations {
 		log.Printf("  → Running migration: %s", migration.name)
-		
+
 		if _, err := db.Pool.Exec(ctx, migration.sql); err != nil {
 			return fmt.Errorf("failed to run migration %s: %w", migration.name, err)
 		}
-		
+
 		log.Printf("  ✅ Migration %s completed", migration.name)
 	}
 
