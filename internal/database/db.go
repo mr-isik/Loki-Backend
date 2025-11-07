@@ -66,7 +66,6 @@ func NewDatabase(config *Config) (*Database, error) {
 		return nil, fmt.Errorf("unable to create connection pool: %w", err)
 	}
 
-	// Verify connection
 	if err := pool.Ping(ctx); err != nil {
 		pool.Close()
 		return nil, fmt.Errorf("unable to ping database: %w", err)
@@ -91,4 +90,120 @@ func (db *Database) Health() error {
 	defer cancel()
 	
 	return db.Pool.Ping(ctx)
+}
+
+// RunMigrations executes all database migrations
+func (db *Database) RunMigrations(ctx context.Context) error {
+	log.Println("🔄 Running database migrations...")
+
+	migrations := []struct {
+		name string
+		sql  string
+	}{
+		{
+			name: "001_create_users_table",
+			sql: `
+				-- Create users table
+				CREATE TABLE IF NOT EXISTS users (
+					id UUID PRIMARY KEY,
+					email VARCHAR(255) UNIQUE NOT NULL,
+					name VARCHAR(100) NOT NULL,
+					password VARCHAR(255) NOT NULL,
+					created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+					updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+					deleted_at TIMESTAMP
+				);
+
+				-- Create indexes
+				CREATE INDEX IF NOT EXISTS idx_users_email ON users(email) WHERE deleted_at IS NULL;
+				CREATE INDEX IF NOT EXISTS idx_users_created_at ON users(created_at DESC);
+				CREATE INDEX IF NOT EXISTS idx_users_deleted_at ON users(deleted_at);
+			`,
+		},
+		{
+			name: "002_create_workspaces_table",
+			sql: `
+				-- Create workspaces table
+				CREATE TABLE IF NOT EXISTS workspaces (
+					id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+					owner_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+					name VARCHAR(255) NOT NULL,
+					created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+				);
+
+				-- Create indexes
+				CREATE INDEX IF NOT EXISTS idx_workspaces_owner_user_id ON workspaces(owner_user_id);
+				CREATE INDEX IF NOT EXISTS idx_workspaces_created_at ON workspaces(created_at DESC);
+			`,
+		},
+		{
+			name: "003_create_workflows_table",
+			sql: `
+				-- Create workflow_status enum
+				DO $$ BEGIN
+					CREATE TYPE workflow_status AS ENUM ('draft', 'published', 'archived');
+				EXCEPTION
+					WHEN duplicate_object THEN null;
+				END $$;
+
+				-- Create workflows table
+				CREATE TABLE IF NOT EXISTS workflows (
+					id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+					workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+					title VARCHAR(255) NOT NULL DEFAULT 'Untitled Workflow',
+					status workflow_status NOT NULL DEFAULT 'draft',
+					created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+					updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+				);
+
+				-- Create indexes
+				CREATE INDEX IF NOT EXISTS idx_workflows_workspace_id ON workflows(workspace_id);
+				CREATE INDEX IF NOT EXISTS idx_workflows_status ON workflows(status);
+				CREATE INDEX IF NOT EXISTS idx_workflows_updated_at ON workflows(updated_at DESC);
+				CREATE INDEX IF NOT EXISTS idx_workflows_created_at ON workflows(created_at DESC);
+			`,
+		},
+		{
+			name: "004_create_node_templates_table",
+			sql: `
+				-- Create node_templates table
+				CREATE TABLE IF NOT EXISTS node_templates (
+					id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+					name VARCHAR(255) NOT NULL,
+					description TEXT,
+					type_key VARCHAR(100) NOT NULL UNIQUE,
+					category VARCHAR(100) NOT NULL,
+					created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+				);
+
+				-- Create indexes
+				CREATE INDEX IF NOT EXISTS idx_node_templates_type_key ON node_templates(type_key);
+				CREATE INDEX IF NOT EXISTS idx_node_templates_category ON node_templates(category);
+				
+				-- Insert default node templates
+				INSERT INTO node_templates (name, description, type_key, category) VALUES
+					('Start Node', 'Entry point of the workflow', 'start', 'control'),
+					('End Node', 'Exit point of the workflow', 'end', 'control'),
+					('HTTP Request', 'Make HTTP requests to external APIs', 'http_request', 'integration'),
+					('Data Transform', 'Transform and manipulate data', 'transform', 'data'),
+					('Condition', 'Conditional branching based on data', 'condition', 'control'),
+					('Loop', 'Iterate over data collections', 'loop', 'control')
+				ON CONFLICT (type_key) DO NOTHING;
+			`,
+		},
+	}
+
+	// Execute migrations in order
+	for _, migration := range migrations {
+		log.Printf("  → Running migration: %s", migration.name)
+		
+		if _, err := db.Pool.Exec(ctx, migration.sql); err != nil {
+			return fmt.Errorf("failed to run migration %s: %w", migration.name, err)
+		}
+		
+		log.Printf("  ✅ Migration %s completed", migration.name)
+	}
+
+	log.Println("✅ All migrations completed successfully")
+	return nil
 }

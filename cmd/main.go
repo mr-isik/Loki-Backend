@@ -18,12 +18,10 @@ import (
 )
 
 func main() {
-	// Load environment variables
 	if err := godotenv.Load(); err != nil {
-		log.Println("⚠️  Error loading .env file, proceeding with system environment variables")
+		log.Println("⚠️ Error loading .env file, proceeding with system environment variables")
 	}
 
-	// Get configuration from environment
 	dbConfig := database.NewConfig(
 		getEnv("DB_HOST", "localhost"),
 		getEnv("DB_PORT", "5432"),
@@ -32,7 +30,6 @@ func main() {
 		getEnv("DB_NAME", "loki_db"),
 	)
 
-	// Initialize database
 	log.Println("🔌 Connecting to database...")
 	db, err := database.NewDatabase(dbConfig)
 	if err != nil {
@@ -40,7 +37,11 @@ func main() {
 	}
 	defer db.Close()
 
-	// Dependency injection
+	ctx := context.Background()
+	if err := db.RunMigrations(ctx); err != nil {
+		log.Fatalf("❌ Failed to run migrations: %v", err)
+	}
+
 	userRepo := repository.NewUserRepository(db.Pool)
 	workspaceRepo := repository.NewWorkspaceRepository(db.Pool)
 	workflowRepo := repository.NewWorkflowRepository(db.Pool)
