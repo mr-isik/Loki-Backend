@@ -46,16 +46,19 @@ func main() {
 	workspaceRepo := repository.NewWorkspaceRepository(db.Pool)
 	workflowRepo := repository.NewWorkflowRepository(db.Pool)
 	workflowEdgeRepo := repository.NewWorkflowEdgeRepository(db.Pool)
+	workflowNodeRepo := repository.NewWorkflowNodeRepository(db.Pool)
 
 	userService := service.NewUserService(userRepo)
 	workspaceService := service.NewWorkspaceService(workspaceRepo)
 	workflowService := service.NewWorkflowService(workflowRepo, workspaceRepo)
 	workflowEdgeService := service.NewWorkflowEdgeService(workflowEdgeRepo)
+	workflowNodeService := service.NewWorkflowNodeService(workflowNodeRepo)
 
 	userHandler := handler.NewUserHandler(userService)
 	workspaceHandler := handler.NewWorkspaceHandler(workspaceService)
 	workflowHandler := handler.NewWorkflowHandler(workflowService)
 	workflowEdgeHandler := handler.NewWorkflowEdgeHandler(workflowEdgeService)
+	workflowNodeHandler := handler.NewWorkflowNodeHandler(workflowNodeService)
 
 	app := fiber.New(fiber.Config{
 		AppName:      "Loki Backend API",
@@ -63,7 +66,7 @@ func main() {
 		ErrorHandler: customErrorHandler,
 	})
 
-	router.SetupRoutes(app, userHandler, workspaceHandler, workflowHandler, workflowEdgeHandler)
+	router.SetupRoutes(app, userHandler, workspaceHandler, workflowHandler, workflowEdgeHandler, workflowNodeHandler)
 
 	port := getEnv("PORT", ":3000")
 	if port[0] != ':' {

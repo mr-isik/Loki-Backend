@@ -40,12 +40,12 @@ func (h *WorkflowNodeHandler) CreateWorkflowNode(c *fiber.Ctx) error {
 
 // GetWorkflowNode handles retrieving a workflow node by ID
 // GET /api/workflow-nodes/:id
-func (h *WorkflowNodeHandler) GetWorkflowNode(c *fiber.Ctx) (*domain.WorkflowNodeResponse, error) {
+func (h *WorkflowNodeHandler) GetWorkflowNode(c *fiber.Ctx) error {
     idParam := c.Params("id")
 
     id, err := uuid.Parse(idParam)
     if err != nil {
-        return nil, c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
+        return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
             Error:   "invalid_request",
             Message: "Invalid workflow node ID",
         })
@@ -53,13 +53,13 @@ func (h *WorkflowNodeHandler) GetWorkflowNode(c *fiber.Ctx) (*domain.WorkflowNod
 
     workflowNode, err := h.service.GetWorkflowNode(c.Context(), id)
     if err != nil {
-        return nil, c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{
+        return c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{
             Error:   "internal_error",
             Message: "Failed to get workflow node",
         })
     }
 
-    return workflowNode, nil
+    return c.JSON(workflowNode)
 }
 
 // UpdateWorkflowNode handles updating a workflow node by ID
@@ -109,27 +109,31 @@ func (h *WorkflowNodeHandler) DeleteWorkflowNode(c *fiber.Ctx) error {
         })
     }
 
-    return nil
+    return c.SendStatus(fiber.StatusNoContent)
 }
 
-// GetWorkflowNodesByWorkflowID handles retrieving workflow nodes by workflow ID
+// GetWorkflowNodes handles retrieving workflow nodes by workflow ID
 // GET /api/workflows/:workflow_id/nodes
-func (h *WorkflowNodeHandler) GetWorkflowNodesByWorkflowID(c *fiber.Ctx) ([]*domain.WorkflowNodeResponse, error) {
+func (h *WorkflowNodeHandler) GetWorkflowNodes(c *fiber.Ctx) error {
     workflowIDParam := c.Params("workflow_id")
     workflowID, err := uuid.Parse(workflowIDParam)
     if err != nil {
-        return nil, c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
+        return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
             Error:   "invalid_request",
             Message: "Invalid workflow ID",
         })
     }
+    
     workflowNodes, err := h.service.GetWorkflowNodesByWorkflowID(c.Context(), workflowID)
     if err != nil {
-        return nil, c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{
+        return c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{
             Error:   "internal_error",
             Message: "Failed to get workflow nodes",
         })
     }
 
-    return workflowNodes, c.Status(fiber.StatusNoContent).Send(nil)
+    return c.JSON(fiber.Map{
+        "nodes": workflowNodes,
+        "count": len(workflowNodes),
+    })
 }

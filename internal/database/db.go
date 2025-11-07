@@ -212,6 +212,26 @@ func (db *Database) RunMigrations(ctx context.Context) error {
 				CREATE INDEX IF NOT EXISTS idx_workflow_edges_target_node ON workflow_edges(target_node_id);
 			`,
 		},
+		{
+			name: "005_create_workflow_nodes_table",
+			sql: `
+				-- Create workflow_nodes table
+				CREATE TABLE IF NOT EXISTS workflow_nodes (
+					id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+					workflow_id UUID NOT NULL REFERENCES workflows(id) ON DELETE CASCADE,
+					template_id UUID NOT NULL REFERENCES node_templates(id) ON DELETE RESTRICT,
+					position_x FLOAT NOT NULL DEFAULT 0,
+					position_y FLOAT NOT NULL DEFAULT 0,
+					data JSONB,
+					created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+					updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+				);
+
+				-- Create indexes for workflow_nodes
+				CREATE INDEX IF NOT EXISTS idx_workflow_nodes_workflow_id ON workflow_nodes(workflow_id);
+				CREATE INDEX IF NOT EXISTS idx_workflow_nodes_template_id ON workflow_nodes(template_id);
+			`,
+		},
 	}
 
 	// Execute migrations in order

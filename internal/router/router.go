@@ -9,7 +9,7 @@ import (
 )
 
 // SetupRoutes configures all application routes
-func SetupRoutes(app *fiber.App, userHandler *handler.UserHandler, workspaceHandler *handler.WorkspaceHandler, workflowHandler *handler.WorkflowHandler, workflowEdgeHandler *handler.WorkflowEdgeHandler) {
+func SetupRoutes(app *fiber.App, userHandler *handler.UserHandler, workspaceHandler *handler.WorkspaceHandler, workflowHandler *handler.WorkflowHandler, workflowEdgeHandler *handler.WorkflowEdgeHandler, workflowNodeHandler *handler.WorkflowNodeHandler) {
 	// Middleware
 	app.Use(recover.New())
 	app.Use(logger.New(logger.Config{
@@ -59,6 +59,7 @@ func SetupRoutes(app *fiber.App, userHandler *handler.UserHandler, workspaceHand
 	workflows.Post("/:id/publish", workflowHandler.PublishWorkflow)
 	workflows.Post("/:id/archive", workflowHandler.ArchiveWorkflow)
 	workflows.Get("/:workflow_id/edges", workflowEdgeHandler.GetWorkflowEdgesByWorkflow)
+	workflows.Get("/:workflow_id/nodes", workflowNodeHandler.GetWorkflowNodes)
 
 	// Workflow Edge routes
 	edges := api.Group("/workflow-edges")
@@ -66,6 +67,13 @@ func SetupRoutes(app *fiber.App, userHandler *handler.UserHandler, workspaceHand
 	edges.Get("/:id", workflowEdgeHandler.GetWorkflowEdge)
 	edges.Put("/:id", workflowEdgeHandler.UpdateWorkflowEdge)
 	edges.Delete("/:id", workflowEdgeHandler.DeleteWorkflowEdge)
+
+	// Workflow Node routes
+	nodes := api.Group("/workflow-nodes")
+	nodes.Post("/", workflowNodeHandler.CreateWorkflowNode)
+	nodes.Get("/:id", workflowNodeHandler.GetWorkflowNode)
+	nodes.Put("/:id", workflowNodeHandler.UpdateWorkflowNode)
+	nodes.Delete("/:id", workflowNodeHandler.DeleteWorkflowNode)
 
 	// 404 handler
 	app.Use(func(c *fiber.Ctx) error {
