@@ -10,11 +10,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-var (
-	ErrInvalidCredentials = errors.New("invalid credentials")
-	ErrUserExists         = errors.New("user already exists")
-)
-
 type userService struct {
 	repo domain.UserRepository
 }
@@ -33,7 +28,7 @@ func (s *userService) CreateUser(ctx context.Context, req *domain.CreateUserRequ
 		return nil, fmt.Errorf("failed to check existing user: %w", err)
 	}
 	if existingUser != nil {
-		return nil, ErrUserExists
+		return nil, domain.ErrUserAlreadyExists
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
@@ -97,7 +92,7 @@ func (s *userService) UpdateUser(ctx context.Context, id uuid.UUID, req *domain.
 			return nil, fmt.Errorf("failed to check email: %w", err)
 		}
 		if existingUser != nil && existingUser.ID != id {
-			return nil, ErrUserExists
+			return nil, domain.ErrUserAlreadyExists
 		}
 		user.Email = req.Email
 	}
