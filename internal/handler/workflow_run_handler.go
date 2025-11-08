@@ -20,7 +20,19 @@ func NewWorkflowRunHandler(service domain.WorkflowRunService) *WorkflowRunHandle
 }
 
 // StartWorkflowRun handles starting a new workflow run
-// POST /api/workflows/:workflow_id/runs
+// @Summary Start workflow run
+// @Description Start a new execution of a workflow
+// @Tags Workflow Runs
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param workflow_id path string true "Workflow ID (UUID)"
+// @Param request body domain.CreateWorkflowRunRequest true "Run configuration"
+// @Success 201 {object} domain.WorkflowRunResponse
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /workflows/{workflow_id}/runs [post]
 func (h *WorkflowRunHandler) StartWorkflowRun(c *fiber.Ctx) error {
 	workflowIDParam := c.Params("workflow_id")
 	workflowID, err := uuid.Parse(workflowIDParam)
@@ -49,7 +61,18 @@ func (h *WorkflowRunHandler) StartWorkflowRun(c *fiber.Ctx) error {
 }
 
 // GetWorkflowRun handles retrieving a workflow run by ID
-// GET /api/workflow-runs/:id
+// @Summary Get workflow run by ID
+// @Description Retrieve workflow run information by ID
+// @Tags Workflow Runs
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Workflow Run ID (UUID)"
+// @Success 200 {object} domain.WorkflowRunResponse
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /workflow-runs/{id} [get]
 func (h *WorkflowRunHandler) GetWorkflowRun(c *fiber.Ctx) error {
 	idParam := c.Params("id")
 	id, err := uuid.Parse(idParam)
@@ -78,7 +101,19 @@ func (h *WorkflowRunHandler) GetWorkflowRun(c *fiber.Ctx) error {
 }
 
 // ListWorkflowRuns handles retrieving workflow runs for a workflow
-// GET /api/workflows/:workflow_id/runs
+// @Summary List workflow runs
+// @Description Retrieve all runs for a specific workflow with pagination
+// @Tags Workflow Runs
+// @Produce json
+// @Security BearerAuth
+// @Param workflow_id path string true "Workflow ID (UUID)"
+// @Param limit query int false "Limit" default(20)
+// @Param offset query int false "Offset" default(0)
+// @Success 200 {object} map[string]interface{} "Returns runs array and total count"
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /workflows/{workflow_id}/runs [get]
 func (h *WorkflowRunHandler) ListWorkflowRuns(c *fiber.Ctx) error {
 	workflowIDParam := c.Params("workflow_id")
 	workflowID, err := uuid.Parse(workflowIDParam)
@@ -110,7 +145,20 @@ func (h *WorkflowRunHandler) ListWorkflowRuns(c *fiber.Ctx) error {
 }
 
 // UpdateWorkflowRunStatus handles updating the status of a workflow run
-// PATCH /api/workflow-runs/:id/status
+// @Summary Update workflow run status
+// @Description Update the status of a workflow run
+// @Tags Workflow Runs
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Workflow Run ID (UUID)"
+// @Param request body domain.UpdateWorkflowRunStatusRequest true "Status update"
+// @Success 204
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /workflow-runs/{id}/status [patch]
 func (h *WorkflowRunHandler) UpdateWorkflowRunStatus(c *fiber.Ctx) error {
 	idParam := c.Params("id")
 	id, err := uuid.Parse(idParam)

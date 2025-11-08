@@ -1,8 +1,9 @@
 # Build stage
 FROM golang:1.25-alpine AS builder
 
-# Install build dependencies
-RUN apk add --no-cache git ca-certificates
+# Install build dependencies including swag for generating swagger docs
+RUN apk add --no-cache git ca-certificates && \
+    go install github.com/swaggo/swag/cmd/swag@latest
 
 WORKDIR /app
 
@@ -14,6 +15,9 @@ RUN go mod download
 
 # Copy source code
 COPY . .
+
+# Generate swagger documentation
+RUN swag init -g cmd/main.go -o docs
 
 # Build the application from cmd directory
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o /app/main ./cmd

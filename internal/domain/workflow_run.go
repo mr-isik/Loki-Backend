@@ -36,6 +36,10 @@ type CreateWorkflowRunRequest struct {
 	WorkflowID uuid.UUID `json:"workflow_id" validate:"required,uuid4"`
 }
 
+type UpdateWorkflowRunStatusRequest struct {
+	Status WorkflowRunStatus `json:"status" validate:"required,oneof=pending running completed failed cancelled"`
+}
+
 type WorkflowRunResponse struct {
 	ID         uuid.UUID         `json:"id"`
 	WorkflowID uuid.UUID         `json:"workflow_id"`

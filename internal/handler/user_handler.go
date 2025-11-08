@@ -20,7 +20,19 @@ func NewUserHandler(service domain.UserService) *UserHandler {
 }
 
 // CreateUser handles user creation
-// POST /api/users
+// @Summary Create a new user
+// @Description Create a new user (admin only)
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body domain.CreateUserRequest true "User details"
+// @Success 204
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 409 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /users [post]
 func (h *UserHandler) CreateUser(c *fiber.Ctx) error {
 	var req domain.CreateUserRequest
 
@@ -49,7 +61,18 @@ func (h *UserHandler) CreateUser(c *fiber.Ctx) error {
 }
 
 // GetUser handles retrieving a user by ID
-// GET /api/users/:id
+// @Summary Get user by ID
+// @Description Retrieve user information by ID
+// @Tags Users
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "User ID (UUID)"
+// @Success 200 {object} domain.UserResponse
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /users/{id} [get]
 func (h *UserHandler) GetUser(c *fiber.Ctx) error {
 	idParam := c.Params("id")
 	id, err := uuid.Parse(idParam)
@@ -78,7 +101,21 @@ func (h *UserHandler) GetUser(c *fiber.Ctx) error {
 }
 
 // UpdateUser handles updating a user
-// PUT /api/users/:id
+// @Summary Update user
+// @Description Update user information
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "User ID (UUID)"
+// @Param request body domain.UpdateUserRequest true "User update details"
+// @Success 204
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 409 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /users/{id} [patch]
 func (h *UserHandler) UpdateUser(c *fiber.Ctx) error {
 	idParam := c.Params("id")
 	id, err := uuid.Parse(idParam)
@@ -121,7 +158,18 @@ func (h *UserHandler) UpdateUser(c *fiber.Ctx) error {
 }
 
 // DeleteUser handles deleting a user
-// DELETE /api/users/:id
+// @Summary Delete user
+// @Description Soft delete a user
+// @Tags Users
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "User ID (UUID)"
+// @Success 204
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /users/{id} [delete]
 func (h *UserHandler) DeleteUser(c *fiber.Ctx) error {
 	idParam := c.Params("id")
 	id, err := uuid.Parse(idParam)

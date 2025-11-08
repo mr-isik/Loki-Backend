@@ -1,0 +1,1843 @@
+basePath: /api
+definitions:
+  domain.CreateNodeRunLogRequest:
+    properties:
+      node_id:
+        type: string
+      run_id:
+        type: string
+      status:
+        $ref: '#/definitions/domain.NodeRunLogStatus'
+    required:
+    - node_id
+    - run_id
+    - status
+    type: object
+  domain.CreateUserRequest:
+    properties:
+      email:
+        type: string
+      name:
+        maxLength: 100
+        minLength: 2
+        type: string
+      password:
+        minLength: 6
+        type: string
+    required:
+    - email
+    - name
+    - password
+    type: object
+  domain.CreateWorkflowEdgeRequest:
+    properties:
+      source_handle:
+        type: string
+      source_node_id:
+        type: string
+      target_handle:
+        type: string
+      target_node_id:
+        type: string
+    required:
+    - source_handle
+    - source_node_id
+    - target_handle
+    - target_node_id
+    type: object
+  domain.CreateWorkflowNodeRequest:
+    properties:
+      data:
+        additionalProperties: {}
+        type: object
+      position_x:
+        type: number
+      position_y:
+        type: number
+      template_id:
+        type: string
+      workflow_id:
+        type: string
+    required:
+    - position_x
+    - position_y
+    - template_id
+    - workflow_id
+    type: object
+  domain.CreateWorkflowRequest:
+    properties:
+      title:
+        maxLength: 255
+        type: string
+    type: object
+  domain.CreateWorkflowRunRequest:
+    properties:
+      workflow_id:
+        type: string
+    required:
+    - workflow_id
+    type: object
+  domain.CreateWorkspaceRequest:
+    properties:
+      name:
+        maxLength: 100
+        minLength: 2
+        type: string
+    required:
+    - name
+    type: object
+  domain.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  domain.LoginResponse:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+    type: object
+  domain.NodeRunLogResponse:
+    properties:
+      created_at:
+        type: string
+      error_msg:
+        type: string
+      finished_at:
+        type: string
+      id:
+        type: string
+      log_output:
+        type: string
+      node_id:
+        type: string
+      run_id:
+        type: string
+      started_at:
+        type: string
+      status:
+        $ref: '#/definitions/domain.NodeRunLogStatus'
+      updated_at:
+        type: string
+    type: object
+  domain.NodeRunLogStatus:
+    enum:
+    - pending
+    - running
+    - completed
+    - failed
+    - skipped
+    type: string
+    x-enum-varnames:
+    - NodeRunLogStatusPending
+    - NodeRunLogStatusRunning
+    - NodeRunLogStatusCompleted
+    - NodeRunLogStatusFailed
+    - NodeRunLogStatusSkipped
+  domain.NodeTemplateResponse:
+    properties:
+      category:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      type_key:
+        type: string
+    type: object
+  domain.RegisterRequest:
+    properties:
+      email:
+        type: string
+      name:
+        maxLength: 100
+        minLength: 2
+        type: string
+      password:
+        minLength: 6
+        type: string
+    required:
+    - email
+    - name
+    - password
+    type: object
+  domain.RegisterResponse:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+    type: object
+  domain.UpdateNodeRunLogRequest:
+    properties:
+      error_msg:
+        type: string
+      log_output:
+        type: string
+      status:
+        $ref: '#/definitions/domain.NodeRunLogStatus'
+    type: object
+  domain.UpdateUserRequest:
+    properties:
+      email:
+        type: string
+      name:
+        maxLength: 100
+        minLength: 2
+        type: string
+    type: object
+  domain.UpdateWorkflowEdgeRequest:
+    properties:
+      source_handle:
+        type: string
+      source_node_id:
+        type: string
+      target_handle:
+        type: string
+      target_node_id:
+        type: string
+    type: object
+  domain.UpdateWorkflowNodeRequest:
+    properties:
+      data:
+        additionalProperties: {}
+        type: object
+      id:
+        type: string
+      position_x:
+        type: number
+      position_y:
+        type: number
+    required:
+    - id
+    type: object
+  domain.UpdateWorkflowRequest:
+    properties:
+      status:
+        allOf:
+        - $ref: '#/definitions/domain.WorkflowStatus'
+        enum:
+        - draft
+        - published
+        - archived
+      title:
+        maxLength: 255
+        type: string
+    type: object
+  domain.UpdateWorkflowRunStatusRequest:
+    properties:
+      status:
+        allOf:
+        - $ref: '#/definitions/domain.WorkflowRunStatus'
+        enum:
+        - pending
+        - running
+        - completed
+        - failed
+        - cancelled
+    required:
+    - status
+    type: object
+  domain.UpdateWorkspaceRequest:
+    properties:
+      name:
+        maxLength: 100
+        minLength: 2
+        type: string
+    required:
+    - name
+    type: object
+  domain.UserResponse:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  domain.WorkflowEdgeResponse:
+    properties:
+      id:
+        type: string
+      source_handle:
+        type: string
+      source_node_id:
+        type: string
+      target_handle:
+        type: string
+      target_node_id:
+        type: string
+      workflow_id:
+        type: string
+    type: object
+  domain.WorkflowNodeResponse:
+    properties:
+      data:
+        additionalProperties: {}
+        type: object
+      id:
+        type: string
+      position_x:
+        type: number
+      position_y:
+        type: number
+      template_id:
+        type: string
+      workflow_id:
+        type: string
+    type: object
+  domain.WorkflowResponse:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      status:
+        $ref: '#/definitions/domain.WorkflowStatus'
+      title:
+        type: string
+      updated_at:
+        type: string
+      workspace_id:
+        type: string
+    type: object
+  domain.WorkflowRunResponse:
+    properties:
+      created_at:
+        type: string
+      finished_at:
+        type: string
+      id:
+        type: string
+      started_at:
+        type: string
+      status:
+        $ref: '#/definitions/domain.WorkflowRunStatus'
+      updated_at:
+        type: string
+      workflow_id:
+        type: string
+    type: object
+  domain.WorkflowRunStatus:
+    enum:
+    - pending
+    - running
+    - completed
+    - failed
+    - cancelled
+    type: string
+    x-enum-varnames:
+    - WorkflowRunStatusPending
+    - WorkflowRunStatusRunning
+    - WorkflowRunStatusCompleted
+    - WorkflowRunStatusFailed
+    - WorkflowRunStatusCancelled
+  domain.WorkflowStatus:
+    enum:
+    - draft
+    - published
+    - archived
+    type: string
+    x-enum-varnames:
+    - WorkflowStatusDraft
+    - WorkflowStatusPublished
+    - WorkflowStatusArchived
+  domain.WorkspaceResponse:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      owner_user_id:
+        type: string
+    type: object
+  handler.ErrorResponse:
+    properties:
+      error:
+        type: string
+      message:
+        type: string
+    type: object
+host: localhost:3000
+info:
+  contact:
+    email: support@loki.com
+    name: API Support
+  description: Workflow automation backend service with authentication
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://swagger.io/terms/
+  title: Loki Backend API
+  version: "1.0"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user and receive access/refresh tokens
+      parameters:
+      - description: Login credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.LoginResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Login user
+      tags:
+      - Authentication
+  /auth/me:
+    get:
+      description: Get information about the authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get current user
+      tags:
+      - Authentication
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Create a new user account and receive access/refresh tokens
+      parameters:
+      - description: Registration details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/domain.RegisterResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Register a new user
+      tags:
+      - Authentication
+  /node-run-logs:
+    post:
+      consumes:
+      - application/json
+      description: Create a new execution log for a workflow node
+      parameters:
+      - description: Node run log details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.CreateNodeRunLogRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/domain.NodeRunLogResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create node run log
+      tags:
+      - Node Run Logs
+  /node-run-logs/{id}:
+    get:
+      description: Retrieve node run log information by ID
+      parameters:
+      - description: Node Run Log ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.NodeRunLogResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get node run log by ID
+      tags:
+      - Node Run Logs
+    patch:
+      consumes:
+      - application/json
+      description: Update node run log status, output, or error message
+      parameters:
+      - description: Node Run Log ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Log update details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.UpdateNodeRunLogRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update node run log
+      tags:
+      - Node Run Logs
+  /node-templates:
+    get:
+      description: Retrieve all available node templates
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Returns templates array and count
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List node templates
+      tags:
+      - Node Templates
+  /node-templates/{id}:
+    get:
+      description: Retrieve node template information by ID
+      parameters:
+      - description: Node Template ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.NodeTemplateResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get node template by ID
+      tags:
+      - Node Templates
+  /users:
+    post:
+      consumes:
+      - application/json
+      description: Create a new user (admin only)
+      parameters:
+      - description: User details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.CreateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new user
+      tags:
+      - Users
+  /users/{id}:
+    delete:
+      description: Soft delete a user
+      parameters:
+      - description: User ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete user
+      tags:
+      - Users
+    get:
+      description: Retrieve user information by ID
+      parameters:
+      - description: User ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.UserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get user by ID
+      tags:
+      - Users
+    patch:
+      consumes:
+      - application/json
+      description: Update user information
+      parameters:
+      - description: User ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: User update details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.UpdateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update user
+      tags:
+      - Users
+  /workflow-edges:
+    post:
+      consumes:
+      - application/json
+      description: Create a connection between two nodes in a workflow
+      parameters:
+      - description: Edge details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.CreateWorkflowEdgeRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create workflow edge
+      tags:
+      - Workflow Edges
+  /workflow-edges/{id}:
+    delete:
+      description: Delete a workflow edge (connection)
+      parameters:
+      - description: Workflow Edge ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete workflow edge
+      tags:
+      - Workflow Edges
+    get:
+      description: Retrieve workflow edge information by ID
+      parameters:
+      - description: Workflow Edge ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.WorkflowEdgeResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get workflow edge by ID
+      tags:
+      - Workflow Edges
+    put:
+      consumes:
+      - application/json
+      description: Update workflow edge information
+      parameters:
+      - description: Workflow Edge ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Edge update details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.UpdateWorkflowEdgeRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update workflow edge
+      tags:
+      - Workflow Edges
+  /workflow-nodes:
+    post:
+      consumes:
+      - application/json
+      description: Create a new node in a workflow
+      parameters:
+      - description: Node details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.CreateWorkflowNodeRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create workflow node
+      tags:
+      - Workflow Nodes
+  /workflow-nodes/{id}:
+    delete:
+      description: Delete a workflow node
+      parameters:
+      - description: Workflow Node ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete workflow node
+      tags:
+      - Workflow Nodes
+    get:
+      description: Retrieve workflow node information by ID
+      parameters:
+      - description: Workflow Node ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.WorkflowNodeResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get workflow node by ID
+      tags:
+      - Workflow Nodes
+    put:
+      consumes:
+      - application/json
+      description: Update workflow node information
+      parameters:
+      - description: Workflow Node ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Node update details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.UpdateWorkflowNodeRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update workflow node
+      tags:
+      - Workflow Nodes
+  /workflow-runs/{id}:
+    get:
+      description: Retrieve workflow run information by ID
+      parameters:
+      - description: Workflow Run ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.WorkflowRunResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get workflow run by ID
+      tags:
+      - Workflow Runs
+  /workflow-runs/{id}/status:
+    patch:
+      consumes:
+      - application/json
+      description: Update the status of a workflow run
+      parameters:
+      - description: Workflow Run ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Status update
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.UpdateWorkflowRunStatusRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update workflow run status
+      tags:
+      - Workflow Runs
+  /workflow-runs/{run_id}/logs:
+    get:
+      description: Retrieve all node execution logs for a specific workflow run
+      parameters:
+      - description: Workflow Run ID (UUID)
+        in: path
+        name: run_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Returns logs array and count
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get node run logs by workflow run ID
+      tags:
+      - Node Run Logs
+  /workflows/{id}:
+    delete:
+      description: Delete a workflow (soft delete)
+      parameters:
+      - description: Workflow ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete workflow
+      tags:
+      - Workflows
+    get:
+      description: Retrieve workflow information by ID
+      parameters:
+      - description: Workflow ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.WorkflowResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get workflow by ID
+      tags:
+      - Workflows
+    put:
+      consumes:
+      - application/json
+      description: Update workflow information
+      parameters:
+      - description: Workflow ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Workflow update details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.UpdateWorkflowRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update workflow
+      tags:
+      - Workflows
+  /workflows/{id}/archive:
+    post:
+      description: Archive a workflow to make it inactive
+      parameters:
+      - description: Workflow ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.WorkflowResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Archive workflow
+      tags:
+      - Workflows
+  /workflows/{id}/publish:
+    post:
+      description: Publish a workflow to make it active
+      parameters:
+      - description: Workflow ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Publish workflow
+      tags:
+      - Workflows
+  /workflows/{workflow_id}/edges:
+    get:
+      description: Retrieve all edges (connections) in a workflow
+      parameters:
+      - description: Workflow ID (UUID)
+        in: path
+        name: workflow_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Returns edges array
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get workflow edges
+      tags:
+      - Workflow Edges
+  /workflows/{workflow_id}/nodes:
+    get:
+      description: Retrieve all nodes in a workflow
+      parameters:
+      - description: Workflow ID (UUID)
+        in: path
+        name: workflow_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Returns nodes array
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get workflow nodes
+      tags:
+      - Workflow Nodes
+  /workflows/{workflow_id}/runs:
+    get:
+      description: Retrieve all runs for a specific workflow with pagination
+      parameters:
+      - description: Workflow ID (UUID)
+        in: path
+        name: workflow_id
+        required: true
+        type: string
+      - default: 20
+        description: Limit
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Offset
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Returns runs array and total count
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List workflow runs
+      tags:
+      - Workflow Runs
+    post:
+      consumes:
+      - application/json
+      description: Start a new execution of a workflow
+      parameters:
+      - description: Workflow ID (UUID)
+        in: path
+        name: workflow_id
+        required: true
+        type: string
+      - description: Run configuration
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.CreateWorkflowRunRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/domain.WorkflowRunResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Start workflow run
+      tags:
+      - Workflow Runs
+  /workspaces:
+    post:
+      consumes:
+      - application/json
+      description: Create a new workspace for the authenticated user
+      parameters:
+      - description: Workspace details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.CreateWorkspaceRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/domain.WorkspaceResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new workspace
+      tags:
+      - Workspaces
+  /workspaces/{id}:
+    delete:
+      description: Delete a workspace (owner only)
+      parameters:
+      - description: Workspace ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete workspace
+      tags:
+      - Workspaces
+    get:
+      description: Retrieve workspace information by ID
+      parameters:
+      - description: Workspace ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.WorkspaceResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get workspace by ID
+      tags:
+      - Workspaces
+    put:
+      consumes:
+      - application/json
+      description: Update workspace information (owner only)
+      parameters:
+      - description: Workspace ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Workspace update details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.UpdateWorkspaceRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update workspace
+      tags:
+      - Workspaces
+  /workspaces/{workspace_id}/workflows:
+    get:
+      description: Retrieve all workflows in a workspace with pagination
+      parameters:
+      - description: Workspace ID (UUID)
+        in: path
+        name: workspace_id
+        required: true
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Returns paginated workflows
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get workspace workflows
+      tags:
+      - Workflows
+    post:
+      consumes:
+      - application/json
+      description: Create a new workflow in a workspace
+      parameters:
+      - description: Workspace ID (UUID)
+        in: path
+        name: workspace_id
+        required: true
+        type: string
+      - description: Workflow details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.CreateWorkflowRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/domain.WorkflowResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new workflow
+      tags:
+      - Workflows
+  /workspaces/my:
+    get:
+      description: Retrieve all workspaces owned by the authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Returns array of workspaces
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get my workspaces
+      tags:
+      - Workspaces
+schemes:
+- http
+- https
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" followed by a space and JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

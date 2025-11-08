@@ -21,7 +21,18 @@ func NewWorkspaceHandler(service domain.WorkspaceService) *WorkspaceHandler {
 }
 
 // CreateWorkspace handles workspace creation
-// POST /api/workspaces
+// @Summary Create a new workspace
+// @Description Create a new workspace for the authenticated user
+// @Tags Workspaces
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body domain.CreateWorkspaceRequest true "Workspace details"
+// @Success 201 {object} domain.WorkspaceResponse
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /workspaces [post]
 func (h *WorkspaceHandler) CreateWorkspace(c *fiber.Ctx) error {
 	// TODO: Get user ID from authentication context
 	// For now, using a dummy user ID from header
@@ -61,7 +72,18 @@ func (h *WorkspaceHandler) CreateWorkspace(c *fiber.Ctx) error {
 }
 
 // GetWorkspace handles retrieving a workspace by ID
-// GET /api/workspaces/:id
+// @Summary Get workspace by ID
+// @Description Retrieve workspace information by ID
+// @Tags Workspaces
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Workspace ID (UUID)"
+// @Success 200 {object} domain.WorkspaceResponse
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /workspaces/{id} [get]
 func (h *WorkspaceHandler) GetWorkspace(c *fiber.Ctx) error {
 	idParam := c.Params("id")
 	id, err := uuid.Parse(idParam)
@@ -90,7 +112,15 @@ func (h *WorkspaceHandler) GetWorkspace(c *fiber.Ctx) error {
 }
 
 // GetMyWorkspaces handles retrieving all workspaces for the authenticated user
-// GET /api/workspaces/my
+// @Summary Get my workspaces
+// @Description Retrieve all workspaces owned by the authenticated user
+// @Tags Workspaces
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} map[string]interface{} "Returns array of workspaces"
+// @Failure 401 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /workspaces/my [get]
 func (h *WorkspaceHandler) GetMyWorkspaces(c *fiber.Ctx) error {
 	userIDStr := c.Get("X-User-ID")
 	if userIDStr == "" {
@@ -150,7 +180,21 @@ func (h *WorkspaceHandler) ListWorkspaces(c *fiber.Ctx) error {
 }
 
 // UpdateWorkspace handles updating a workspace
-// PUT /api/workspaces/:id
+// @Summary Update workspace
+// @Description Update workspace information (owner only)
+// @Tags Workspaces
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Workspace ID (UUID)"
+// @Param request body domain.UpdateWorkspaceRequest true "Workspace update details"
+// @Success 204
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 403 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /workspaces/{id} [put]
 func (h *WorkspaceHandler) UpdateWorkspace(c *fiber.Ctx) error {
 	userIDStr := c.Get("X-User-ID")
 	if userIDStr == "" {
@@ -209,7 +253,19 @@ func (h *WorkspaceHandler) UpdateWorkspace(c *fiber.Ctx) error {
 }
 
 // DeleteWorkspace handles deleting a workspace
-// DELETE /api/workspaces/:id
+// @Summary Delete workspace
+// @Description Delete a workspace (owner only)
+// @Tags Workspaces
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Workspace ID (UUID)"
+// @Success 204
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 403 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /workspaces/{id} [delete]
 func (h *WorkspaceHandler) DeleteWorkspace(c *fiber.Ctx) error {
 	userIDStr := c.Get("X-User-ID")
 	if userIDStr == "" {

@@ -5,9 +5,12 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/gofiber/swagger"
 	"github.com/mr-isik/loki-backend/internal/handler"
 	"github.com/mr-isik/loki-backend/internal/middleware"
 	"github.com/mr-isik/loki-backend/internal/util"
+	
+	_ "github.com/mr-isik/loki-backend/docs"
 )
 
 // SetupRoutes configures all application routes
@@ -30,6 +33,13 @@ func SetupRoutes(app *fiber.App, jwtManager *util.JWTManager, authHandler *handl
 			"service": "loki-backend",
 		})
 	})
+
+	// Swagger documentation
+	app.Get("/swagger/*", swagger.New(swagger.Config{
+		Title:        "Loki Backend API",
+		DeepLinking:  true,
+		DocExpansion: "list",
+	}))
 
 	// API routes
 	api := app.Group("/api")

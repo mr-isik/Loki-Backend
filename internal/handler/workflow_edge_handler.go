@@ -19,7 +19,18 @@ func NewWorkflowEdgeHandler(service *service.WorkflowEdgeService) *WorkflowEdgeH
 }
 
 // CreateWorkflowEdge handles creating a new workflow edge
-// POST /api/workflow-edges
+// @Summary Create workflow edge
+// @Description Create a connection between two nodes in a workflow
+// @Tags Workflow Edges
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body domain.CreateWorkflowEdgeRequest true "Edge details"
+// @Success 204
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /workflow-edges [post]
 func (h *WorkflowEdgeHandler) CreateWorkflowEdge(c *fiber.Ctx) error {
 	var req domain.CreateWorkflowEdgeRequest
 	if err := c.BodyParser(&req); err != nil {
@@ -52,7 +63,18 @@ func (h *WorkflowEdgeHandler) CreateWorkflowEdge(c *fiber.Ctx) error {
 }
 
 // GetWorkflowEdge handles retrieving a workflow edge by ID
-// GET /api/workflow-edges/:id
+// @Summary Get workflow edge by ID
+// @Description Retrieve workflow edge information by ID
+// @Tags Workflow Edges
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Workflow Edge ID (UUID)"
+// @Success 200 {object} domain.WorkflowEdgeResponse
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /workflow-edges/{id} [get]
 func (h *WorkflowEdgeHandler) GetWorkflowEdge(c *fiber.Ctx) error {
 	idParam := c.Params("id")
 	id, err := uuid.Parse(idParam)
@@ -81,7 +103,17 @@ func (h *WorkflowEdgeHandler) GetWorkflowEdge(c *fiber.Ctx) error {
 }
 
 // GetWorkflowEdgesByWorkflow handles retrieving all edges for a workflow
-// GET /api/workflows/:workflow_id/edges
+// @Summary Get workflow edges
+// @Description Retrieve all edges (connections) in a workflow
+// @Tags Workflow Edges
+// @Produce json
+// @Security BearerAuth
+// @Param workflow_id path string true "Workflow ID (UUID)"
+// @Success 200 {object} map[string]interface{} "Returns edges array"
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /workflows/{workflow_id}/edges [get]
 func (h *WorkflowEdgeHandler) GetWorkflowEdgesByWorkflow(c *fiber.Ctx) error {
 	workflowIDParam := c.Params("workflow_id")
 	workflowID, err := uuid.Parse(workflowIDParam)
@@ -112,7 +144,20 @@ func (h *WorkflowEdgeHandler) GetWorkflowEdgesByWorkflow(c *fiber.Ctx) error {
 }
 
 // UpdateWorkflowEdge handles updating a workflow edge
-// PUT /api/workflow-edges/:id
+// @Summary Update workflow edge
+// @Description Update workflow edge information
+// @Tags Workflow Edges
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Workflow Edge ID (UUID)"
+// @Param request body domain.UpdateWorkflowEdgeRequest true "Edge update details"
+// @Success 204
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /workflow-edges/{id} [put]
 func (h *WorkflowEdgeHandler) UpdateWorkflowEdge(c *fiber.Ctx) error {
 	idParam := c.Params("id")
 	id, err := uuid.Parse(idParam)
@@ -160,7 +205,18 @@ func (h *WorkflowEdgeHandler) UpdateWorkflowEdge(c *fiber.Ctx) error {
 }
 
 // DeleteWorkflowEdge handles deleting a workflow edge
-// DELETE /api/workflow-edges/:id
+// @Summary Delete workflow edge
+// @Description Delete a workflow edge (connection)
+// @Tags Workflow Edges
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Workflow Edge ID (UUID)"
+// @Success 204
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /workflow-edges/{id} [delete]
 func (h *WorkflowEdgeHandler) DeleteWorkflowEdge(c *fiber.Ctx) error {
 	idParam := c.Params("id")
 	id, err := uuid.Parse(idParam)

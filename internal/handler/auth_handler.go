@@ -19,7 +19,17 @@ func NewAuthHandler(service domain.AuthService) *AuthHandler {
 }
 
 // Register handles user registration
-// POST /api/auth/register
+// @Summary Register a new user
+// @Description Create a new user account and receive access/refresh tokens
+// @Tags Authentication
+// @Accept json
+// @Produce json
+// @Param request body domain.RegisterRequest true "Registration details"
+// @Success 201 {object} domain.RegisterResponse
+// @Failure 400 {object} ErrorResponse
+// @Failure 409 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /auth/register [post]
 func (h *AuthHandler) Register(c *fiber.Ctx) error {
 	var req domain.RegisterRequest
 	if err := c.BodyParser(&req); err != nil {
@@ -62,7 +72,17 @@ func (h *AuthHandler) Register(c *fiber.Ctx) error {
 }
 
 // Login handles user login
-// POST /api/auth/login
+// @Summary Login user
+// @Description Authenticate user and receive access/refresh tokens
+// @Tags Authentication
+// @Accept json
+// @Produce json
+// @Param request body domain.LoginRequest true "Login credentials"
+// @Success 200 {object} domain.LoginResponse
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /auth/login [post]
 func (h *AuthHandler) Login(c *fiber.Ctx) error {
 	var req domain.LoginRequest
 	if err := c.BodyParser(&req); err != nil {
@@ -97,7 +117,14 @@ func (h *AuthHandler) Login(c *fiber.Ctx) error {
 }
 
 // GetMe returns the current authenticated user
-// GET /api/auth/me
+// @Summary Get current user
+// @Description Get information about the authenticated user
+// @Tags Authentication
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} map[string]interface{}
+// @Failure 401 {object} ErrorResponse
+// @Router /auth/me [get]
 func (h *AuthHandler) GetMe(c *fiber.Ctx) error {
 	// Get user from context (set by auth middleware)
 	userID := c.Locals("userID")

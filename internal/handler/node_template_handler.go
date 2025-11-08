@@ -19,7 +19,15 @@ func NewNodeTemplateHandler(service domain.NodeTemplateService) *NodeTemplateHan
 }
 
 // ListNodeTemplates handles retrieving all node templates
-// GET /api/node-templates
+// @Summary List node templates
+// @Description Retrieve all available node templates
+// @Tags Node Templates
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} map[string]interface{} "Returns templates array and count"
+// @Failure 401 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /node-templates [get]
 func (h *NodeTemplateHandler) ListNodeTemplates(c *fiber.Ctx) error {
 	templates, err := h.service.ListNodeTemplates(c.Context())
 	if err != nil {
@@ -36,7 +44,18 @@ func (h *NodeTemplateHandler) ListNodeTemplates(c *fiber.Ctx) error {
 }
 
 // GetNodeTemplate handles retrieving a node template by ID
-// GET /api/node-templates/:id
+// @Summary Get node template by ID
+// @Description Retrieve node template information by ID
+// @Tags Node Templates
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Node Template ID (UUID)"
+// @Success 200 {object} domain.NodeTemplateResponse
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /node-templates/{id} [get]
 func (h *NodeTemplateHandler) GetNodeTemplate(c *fiber.Ctx) error {
 	idParam := c.Params("id")
 	id, err := uuid.Parse(idParam)

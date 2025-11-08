@@ -21,7 +21,19 @@ func NewWorkflowHandler(service domain.WorkflowService) *WorkflowHandler {
 }
 
 // CreateWorkflow handles workflow creation
-// POST /api/workspaces/:workspace_id/workflows
+// @Summary Create a new workflow
+// @Description Create a new workflow in a workspace
+// @Tags Workflows
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param workspace_id path string true "Workspace ID (UUID)"
+// @Param request body domain.CreateWorkflowRequest true "Workflow details"
+// @Success 201 {object} domain.WorkflowResponse
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /workspaces/{workspace_id}/workflows [post]
 func (h *WorkflowHandler) CreateWorkflow(c *fiber.Ctx) error {
 	userIDStr := c.Get("X-User-ID")
 	if userIDStr == "" {
@@ -74,7 +86,18 @@ func (h *WorkflowHandler) CreateWorkflow(c *fiber.Ctx) error {
 }
 
 // GetWorkflow handles retrieving a workflow by ID
-// GET /api/workflows/:id
+// @Summary Get workflow by ID
+// @Description Retrieve workflow information by ID
+// @Tags Workflows
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Workflow ID (UUID)"
+// @Success 200 {object} domain.WorkflowResponse
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /workflows/{id} [get]
 func (h *WorkflowHandler) GetWorkflow(c *fiber.Ctx) error {
 	userIDStr := c.Get("X-User-ID")
 	if userIDStr == "" {
@@ -125,7 +148,19 @@ func (h *WorkflowHandler) GetWorkflow(c *fiber.Ctx) error {
 }
 
 // GetWorkspaceWorkflows handles retrieving all workflows in a workspace
-// GET /api/workspaces/:workspace_id/workflows?page=1&page_size=10
+// @Summary Get workspace workflows
+// @Description Retrieve all workflows in a workspace with pagination
+// @Tags Workflows
+// @Produce json
+// @Security BearerAuth
+// @Param workspace_id path string true "Workspace ID (UUID)"
+// @Param page query int false "Page number" default(1)
+// @Param page_size query int false "Page size" default(10)
+// @Success 200 {object} map[string]interface{} "Returns paginated workflows"
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /workspaces/{workspace_id}/workflows [get]
 func (h *WorkflowHandler) GetWorkspaceWorkflows(c *fiber.Ctx) error {
 	userIDStr := c.Get("X-User-ID")
 	if userIDStr == "" {
@@ -186,7 +221,21 @@ func (h *WorkflowHandler) GetWorkspaceWorkflows(c *fiber.Ctx) error {
 }
 
 // UpdateWorkflow handles updating a workflow
-// PUT /api/workflows/:id
+// @Summary Update workflow
+// @Description Update workflow information
+// @Tags Workflows
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Workflow ID (UUID)"
+// @Param request body domain.UpdateWorkflowRequest true "Workflow update details"
+// @Success 204
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 403 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /workflows/{id} [put]
 func (h *WorkflowHandler) UpdateWorkflow(c *fiber.Ctx) error {
 	userIDStr := c.Get("X-User-ID")
 	if userIDStr == "" {
@@ -245,7 +294,19 @@ func (h *WorkflowHandler) UpdateWorkflow(c *fiber.Ctx) error {
 }
 
 // DeleteWorkflow handles deleting a workflow
-// DELETE /api/workflows/:id
+// @Summary Delete workflow
+// @Description Delete a workflow (soft delete)
+// @Tags Workflows
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Workflow ID (UUID)"
+// @Success 204
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 403 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /workflows/{id} [delete]
 func (h *WorkflowHandler) DeleteWorkflow(c *fiber.Ctx) error {
 	userIDStr := c.Get("X-User-ID")
 	if userIDStr == "" {
@@ -295,7 +356,19 @@ func (h *WorkflowHandler) DeleteWorkflow(c *fiber.Ctx) error {
 }
 
 // PublishWorkflow handles publishing a workflow
-// POST /api/workflows/:id/publish
+// @Summary Publish workflow
+// @Description Publish a workflow to make it active
+// @Tags Workflows
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Workflow ID (UUID)"
+// @Success 204
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 403 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /workflows/{id}/publish [post]
 func (h *WorkflowHandler) PublishWorkflow(c *fiber.Ctx) error {
 	userIDStr := c.Get("X-User-ID")
 	if userIDStr == "" {
@@ -346,7 +419,19 @@ func (h *WorkflowHandler) PublishWorkflow(c *fiber.Ctx) error {
 }
 
 // ArchiveWorkflow handles archiving a workflow
-// POST /api/workflows/:id/archive
+// @Summary Archive workflow
+// @Description Archive a workflow to make it inactive
+// @Tags Workflows
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Workflow ID (UUID)"
+// @Success 200 {object} domain.WorkflowResponse
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 403 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /workflows/{id}/archive [post]
 func (h *WorkflowHandler) ArchiveWorkflow(c *fiber.Ctx) error {
 	userIDStr := c.Get("X-User-ID")
 	if userIDStr == "" {

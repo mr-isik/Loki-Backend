@@ -16,7 +16,29 @@ import (
 	"github.com/mr-isik/loki-backend/internal/router"
 	"github.com/mr-isik/loki-backend/internal/service"
 	"github.com/mr-isik/loki-backend/internal/util"
+
+	_ "github.com/mr-isik/loki-backend/docs" // Swagger docs
 )
+
+// @title Loki Backend API
+// @version 1.0
+// @description Workflow automation backend service with authentication
+// @termsOfService http://swagger.io/terms/
+
+// @contact.name API Support
+// @contact.email support@loki.com
+
+// @license.name MIT
+// @license.url https://opensource.org/licenses/MIT
+
+// @host localhost:3000
+// @BasePath /api
+// @schemes http https
+
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Type "Bearer" followed by a space and JWT token.
 
 func main() {
 	if err := godotenv.Load(); err != nil {
@@ -47,8 +69,8 @@ func main() {
 	jwtManager := util.NewJWTManager(
 		getEnv("JWT_ACCESS_SECRET", "your-super-secret-access-key-change-this-in-production"),
 		getEnv("JWT_REFRESH_SECRET", "your-super-secret-refresh-key-change-this-in-production"),
-		15*time.Minute,  // Access token TTL: 15 minutes
-		7*24*time.Hour,  // Refresh token TTL: 7 days
+		15*time.Minute, // Access token TTL: 15 minutes
+		7*24*time.Hour, // Refresh token TTL: 7 days
 	)
 
 	userRepo := repository.NewUserRepository(db.Pool)
