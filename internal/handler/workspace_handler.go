@@ -34,7 +34,7 @@ func NewWorkspaceHandler(service domain.WorkspaceService) *WorkspaceHandler {
 // @Failure 500 {object} ErrorResponse
 // @Router /workspaces [post]
 func (h *WorkspaceHandler) CreateWorkspace(c *fiber.Ctx) error {
-	userID := c.Locals("userID"=.(uuid.UUID)
+	userID := c.Locals("userID").(uuid.UUID)
 
 	var req domain.CreateWorkspaceRequest
 	err := c.BodyParser(&req)
@@ -107,7 +107,7 @@ func (h *WorkspaceHandler) GetWorkspace(c *fiber.Ctx) error {
 // @Failure 500 {object} ErrorResponse
 // @Router /workspaces/my [get]
 func (h *WorkspaceHandler) GetMyWorkspaces(c *fiber.Ctx) error {
-	userID := c.Locals("userID"=.(uuid.UUID)
+	userID := c.Locals("userID").(uuid.UUID)
 
 	workspaces, err := h.service.GetUserWorkspaces(c.Context(), userID)
 	if err != nil {
@@ -167,7 +167,7 @@ func (h *WorkspaceHandler) ListWorkspaces(c *fiber.Ctx) error {
 // @Failure 500 {object} ErrorResponse
 // @Router /workspaces/{id} [put]
 func (h *WorkspaceHandler) UpdateWorkspace(c *fiber.Ctx) error {
-	userID := c.Locals("userID"=.(uuid.UUID)
+	userID := c.Locals("userID").(uuid.UUID)
 
 	idParam := c.Params("id")
 	id, err := uuid.Parse(idParam)
@@ -224,7 +224,7 @@ func (h *WorkspaceHandler) UpdateWorkspace(c *fiber.Ctx) error {
 // @Failure 500 {object} ErrorResponse
 // @Router /workspaces/{id} [delete]
 func (h *WorkspaceHandler) DeleteWorkspace(c *fiber.Ctx) error {
-	userID := c.Locals("userID"=.(uuid.UUID)
+	userID := c.Locals("userID").(uuid.UUID)
 
 	idParam := c.Params("id")
 	id, err := uuid.Parse(idParam)

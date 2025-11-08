@@ -127,7 +127,7 @@ func (h *AuthHandler) Login(c *fiber.Ctx) error {
 // @Router /auth/me [get]
 func (h *AuthHandler) GetMe(c *fiber.Ctx) error {
 	// Get user from context (set by auth middleware)
-	userID := c.Locals("userID"=
+	userID := c.Locals("userID")
 	email := c.Locals("email")
 	name := c.Locals("name")
 
