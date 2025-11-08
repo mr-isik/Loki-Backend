@@ -35,7 +35,7 @@ func NewWorkflowHandler(service domain.WorkflowService) *WorkflowHandler {
 // @Failure 500 {object} ErrorResponse
 // @Router /workspaces/{workspace_id}/workflows [post]
 func (h *WorkflowHandler) CreateWorkflow(c *fiber.Ctx) error {
-	userID := c.Locals("userId").(uuid.UUID)
+	userID := c.Locals("userID"=.(uuid.UUID)
 
 	workspaceIDParam := c.Params("workspace_id")
 	workspaceID, err := uuid.Parse(workspaceIDParam)
@@ -86,7 +86,7 @@ func (h *WorkflowHandler) CreateWorkflow(c *fiber.Ctx) error {
 // @Failure 500 {object} ErrorResponse
 // @Router /workflows/{id} [get]
 func (h *WorkflowHandler) GetWorkflow(c *fiber.Ctx) error {
-	userID := c.Locals("userId").(uuid.UUID)
+	userID := c.Locals("userID"=.(uuid.UUID)
 
 	idParam := c.Params("id")
 	id, err := uuid.Parse(idParam)
@@ -135,7 +135,7 @@ func (h *WorkflowHandler) GetWorkflow(c *fiber.Ctx) error {
 // @Failure 500 {object} ErrorResponse
 // @Router /workspaces/{workspace_id}/workflows [get]
 func (h *WorkflowHandler) GetWorkspaceWorkflows(c *fiber.Ctx) error {
-	userID := c.Locals("userId").(uuid.UUID)
+	userID := c.Locals("userID"=.(uuid.UUID)
 
 	workspaceIDParam := c.Params("workspace_id")
 	workspaceID, err := uuid.Parse(workspaceIDParam)
@@ -196,7 +196,7 @@ func (h *WorkflowHandler) GetWorkspaceWorkflows(c *fiber.Ctx) error {
 // @Failure 500 {object} ErrorResponse
 // @Router /workflows/{id} [put]
 func (h *WorkflowHandler) UpdateWorkflow(c *fiber.Ctx) error {
-	userID := c.Locals("userId").(uuid.UUID)
+	userID := c.Locals("userID"=.(uuid.UUID)
 
 	idParam := c.Params("id")
 	id, err := uuid.Parse(idParam)
@@ -253,7 +253,7 @@ func (h *WorkflowHandler) UpdateWorkflow(c *fiber.Ctx) error {
 // @Failure 500 {object} ErrorResponse
 // @Router /workflows/{id} [delete]
 func (h *WorkflowHandler) DeleteWorkflow(c *fiber.Ctx) error {
-	userID := c.Locals("userId").(uuid.UUID)
+	userID := c.Locals("userID"=.(uuid.UUID)
 
 	idParam := c.Params("id")
 	id, err := uuid.Parse(idParam)
@@ -301,7 +301,7 @@ func (h *WorkflowHandler) DeleteWorkflow(c *fiber.Ctx) error {
 // @Failure 500 {object} ErrorResponse
 // @Router /workflows/{id}/publish [post]
 func (h *WorkflowHandler) PublishWorkflow(c *fiber.Ctx) error {
-	userID := c.Locals("userId").(uuid.UUID)
+	userID := c.Locals("userID"=.(uuid.UUID)
 
 	idParam := c.Params("id")
 	id, err := uuid.Parse(idParam)
@@ -350,7 +350,7 @@ func (h *WorkflowHandler) PublishWorkflow(c *fiber.Ctx) error {
 // @Failure 500 {object} ErrorResponse
 // @Router /workflows/{id}/archive [post]
 func (h *WorkflowHandler) ArchiveWorkflow(c *fiber.Ctx) error {
-	userID := c.Locals("userId").(uuid.UUID)
+	userID := c.Locals("userID"=.(uuid.UUID)
 
 	idParam := c.Params("id")
 	id, err := uuid.Parse(idParam)
