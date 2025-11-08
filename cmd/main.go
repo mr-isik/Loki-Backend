@@ -15,6 +15,7 @@ import (
 	"github.com/mr-isik/loki-backend/internal/repository"
 	"github.com/mr-isik/loki-backend/internal/router"
 	"github.com/mr-isik/loki-backend/internal/service"
+	"github.com/mr-isik/loki-backend/internal/util"
 )
 
 func main() {
@@ -42,6 +43,14 @@ func main() {
 		log.Fatalf("❌ Failed to run migrations: %v", err)
 	}
 
+	// Initialize JWT Manager
+	jwtManager := util.NewJWTManager(
+		getEnv("JWT_ACCESS_SECRET", "your-super-secret-access-key-change-this-in-production"),
+		getEnv("JWT_REFRESH_SECRET", "your-super-secret-refresh-key-change-this-in-production"),
+		15*time.Minute,  // Access token TTL: 15 minutes
+		7*24*time.Hour,  // Refresh token TTL: 7 days
+	)
+
 	userRepo := repository.NewUserRepository(db.Pool)
 	workspaceRepo := repository.NewWorkspaceRepository(db.Pool)
 	workflowRepo := repository.NewWorkflowRepository(db.Pool)
@@ -51,6 +60,7 @@ func main() {
 	workflowRunRepo := repository.NewWorkflowRunRepository(db.Pool)
 	nodeRunLogRepo := repository.NewNodeRunLogRepository(db.Pool)
 
+	authService := service.NewAuthService(userRepo, jwtManager)
 	userService := service.NewUserService(userRepo)
 	workspaceService := service.NewWorkspaceService(workspaceRepo)
 	workflowService := service.NewWorkflowService(workflowRepo, workspaceRepo)
@@ -60,6 +70,7 @@ func main() {
 	workflowRunService := service.NewWorkflowRunService(workflowRunRepo)
 	nodeRunLogService := service.NewNodeRunLogService(nodeRunLogRepo)
 
+	authHandler := handler.NewAuthHandler(authService)
 	userHandler := handler.NewUserHandler(userService)
 	workspaceHandler := handler.NewWorkspaceHandler(workspaceService)
 	workflowHandler := handler.NewWorkflowHandler(workflowService)
@@ -75,7 +86,7 @@ func main() {
 		ErrorHandler: customErrorHandler,
 	})
 
-	router.SetupRoutes(app, userHandler, workspaceHandler, workflowHandler, workflowEdgeHandler, workflowNodeHandler, nodeTemplateHandler, workflowRunHandler, nodeRunLogHandler)
+	router.SetupRoutes(app, jwtManager, authHandler, userHandler, workspaceHandler, workflowHandler, workflowEdgeHandler, workflowNodeHandler, nodeTemplateHandler, workflowRunHandler, nodeRunLogHandler)
 
 	port := getEnv("PORT", ":3000")
 	if port[0] != ':' {
