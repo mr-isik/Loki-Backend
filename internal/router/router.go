@@ -9,7 +9,7 @@ import (
 	"github.com/mr-isik/loki-backend/internal/handler"
 	"github.com/mr-isik/loki-backend/internal/middleware"
 	"github.com/mr-isik/loki-backend/internal/util"
-	
+
 	_ "github.com/mr-isik/loki-backend/docs"
 )
 
