@@ -5,17 +5,17 @@ services:
     container_name: loki-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: loki
-      POSTGRES_PASSWORD: loki_password
-      POSTGRES_DB: loki_db
+      POSTGRES_USER: "${DB_USER}"
+      POSTGRES_PASSWORD: "${DB_PASSWORD}"
+      POSTGRES_DB: "${DB_NAME}"
     ports:
-      - "5432:5432"
+      - "${DB_PORT}:${DB_PORT}"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - loki-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U loki -d loki_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -29,18 +29,13 @@ services:
     restart: unless-stopped
     ports:
       - "3000:3000"
-    environment:
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_USER: loki
-      DB_PASSWORD: loki_password
-      DB_NAME: loki_db
-      PORT: :3000
     depends_on:
       postgres:
         condition: service_healthy
     networks:
       - loki-network
+    env_file:
+      - .env
 
 volumes:
   postgres_data:
