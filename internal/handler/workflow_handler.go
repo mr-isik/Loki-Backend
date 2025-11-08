@@ -35,24 +35,11 @@ func NewWorkflowHandler(service domain.WorkflowService) *WorkflowHandler {
 // @Failure 500 {object} ErrorResponse
 // @Router /workspaces/{workspace_id}/workflows [post]
 func (h *WorkflowHandler) CreateWorkflow(c *fiber.Ctx) error {
-	userIDStr := c.Get("X-User-ID")
-	if userIDStr == "" {
-		return c.Status(fiber.StatusUnauthorized).JSON(ErrorResponse{
-			Error:   "unauthorized",
-			Message: "User ID required",
-		})
-	}
-
-	userID, err := uuid.Parse(userIDStr)
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
-			Error:   "invalid_user_id",
-			Message: "Invalid user ID format",
-		})
-	}
+	userID := c.Locals("userId").(uuid.UUID)
 
 	workspaceIDParam := c.Params("workspace_id")
 	workspaceID, err := uuid.Parse(workspaceIDParam)
+
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
 			Error:   "invalid_workspace_id",
@@ -99,21 +86,7 @@ func (h *WorkflowHandler) CreateWorkflow(c *fiber.Ctx) error {
 // @Failure 500 {object} ErrorResponse
 // @Router /workflows/{id} [get]
 func (h *WorkflowHandler) GetWorkflow(c *fiber.Ctx) error {
-	userIDStr := c.Get("X-User-ID")
-	if userIDStr == "" {
-		return c.Status(fiber.StatusUnauthorized).JSON(ErrorResponse{
-			Error:   "unauthorized",
-			Message: "User ID required",
-		})
-	}
-
-	userID, err := uuid.Parse(userIDStr)
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
-			Error:   "invalid_user_id",
-			Message: "Invalid user ID format",
-		})
-	}
+	userID := c.Locals("userId").(uuid.UUID)
 
 	idParam := c.Params("id")
 	id, err := uuid.Parse(idParam)
@@ -162,21 +135,7 @@ func (h *WorkflowHandler) GetWorkflow(c *fiber.Ctx) error {
 // @Failure 500 {object} ErrorResponse
 // @Router /workspaces/{workspace_id}/workflows [get]
 func (h *WorkflowHandler) GetWorkspaceWorkflows(c *fiber.Ctx) error {
-	userIDStr := c.Get("X-User-ID")
-	if userIDStr == "" {
-		return c.Status(fiber.StatusUnauthorized).JSON(ErrorResponse{
-			Error:   "unauthorized",
-			Message: "User ID required",
-		})
-	}
-
-	userID, err := uuid.Parse(userIDStr)
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
-			Error:   "invalid_user_id",
-			Message: "Invalid user ID format",
-		})
-	}
+	userID := c.Locals("userId").(uuid.UUID)
 
 	workspaceIDParam := c.Params("workspace_id")
 	workspaceID, err := uuid.Parse(workspaceIDParam)
@@ -237,21 +196,7 @@ func (h *WorkflowHandler) GetWorkspaceWorkflows(c *fiber.Ctx) error {
 // @Failure 500 {object} ErrorResponse
 // @Router /workflows/{id} [put]
 func (h *WorkflowHandler) UpdateWorkflow(c *fiber.Ctx) error {
-	userIDStr := c.Get("X-User-ID")
-	if userIDStr == "" {
-		return c.Status(fiber.StatusUnauthorized).JSON(ErrorResponse{
-			Error:   "unauthorized",
-			Message: "User ID required",
-		})
-	}
-
-	userID, err := uuid.Parse(userIDStr)
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
-			Error:   "invalid_user_id",
-			Message: "Invalid user ID format",
-		})
-	}
+	userID := c.Locals("userId").(uuid.UUID)
 
 	idParam := c.Params("id")
 	id, err := uuid.Parse(idParam)
@@ -308,21 +253,7 @@ func (h *WorkflowHandler) UpdateWorkflow(c *fiber.Ctx) error {
 // @Failure 500 {object} ErrorResponse
 // @Router /workflows/{id} [delete]
 func (h *WorkflowHandler) DeleteWorkflow(c *fiber.Ctx) error {
-	userIDStr := c.Get("X-User-ID")
-	if userIDStr == "" {
-		return c.Status(fiber.StatusUnauthorized).JSON(ErrorResponse{
-			Error:   "unauthorized",
-			Message: "User ID required",
-		})
-	}
-
-	userID, err := uuid.Parse(userIDStr)
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
-			Error:   "invalid_user_id",
-			Message: "Invalid user ID format",
-		})
-	}
+	userID := c.Locals("userId").(uuid.UUID)
 
 	idParam := c.Params("id")
 	id, err := uuid.Parse(idParam)
@@ -370,21 +301,7 @@ func (h *WorkflowHandler) DeleteWorkflow(c *fiber.Ctx) error {
 // @Failure 500 {object} ErrorResponse
 // @Router /workflows/{id}/publish [post]
 func (h *WorkflowHandler) PublishWorkflow(c *fiber.Ctx) error {
-	userIDStr := c.Get("X-User-ID")
-	if userIDStr == "" {
-		return c.Status(fiber.StatusUnauthorized).JSON(ErrorResponse{
-			Error:   "unauthorized",
-			Message: "User ID required",
-		})
-	}
-
-	userID, err := uuid.Parse(userIDStr)
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
-			Error:   "invalid_user_id",
-			Message: "Invalid user ID format",
-		})
-	}
+	userID := c.Locals("userId").(uuid.UUID)
 
 	idParam := c.Params("id")
 	id, err := uuid.Parse(idParam)
@@ -433,21 +350,7 @@ func (h *WorkflowHandler) PublishWorkflow(c *fiber.Ctx) error {
 // @Failure 500 {object} ErrorResponse
 // @Router /workflows/{id}/archive [post]
 func (h *WorkflowHandler) ArchiveWorkflow(c *fiber.Ctx) error {
-	userIDStr := c.Get("X-User-ID")
-	if userIDStr == "" {
-		return c.Status(fiber.StatusUnauthorized).JSON(ErrorResponse{
-			Error:   "unauthorized",
-			Message: "User ID required",
-		})
-	}
-
-	userID, err := uuid.Parse(userIDStr)
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
-			Error:   "invalid_user_id",
-			Message: "Invalid user ID format",
-		})
-	}
+	userID := c.Locals("userId").(uuid.UUID)
 
 	idParam := c.Params("id")
 	id, err := uuid.Parse(idParam)
