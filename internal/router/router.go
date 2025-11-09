@@ -38,32 +38,30 @@ func SetupRoutes(app *fiber.App, jwtManager *util.JWTManager, authHandler *handl
 
 	// Swagger documentation
 	app.Get("/swagger/*", swagger.New(swagger.Config{
-		Title:        "Loki Backend API",
+		Title:        "Loki Backend app",
 		DeepLinking:  true,
 		DocExpansion: "list",
 	}))
 
-	// API routes
-	api := app.Group("/api")
-
 	// Auth routes (public)
-	auth := api.Group("/auth")
+	auth := app.Group("/auth")
 	auth.Post("/register", authHandler.Register)
 	auth.Post("/login", authHandler.Login)
 	auth.Get("/me", middleware.AuthMiddleware(jwtManager), authHandler.GetMe)
+	auth.Post("/refresh-token", authHandler.RefreshToken)
 
 	// Create auth middleware
 	authMiddleware := middleware.AuthMiddleware(jwtManager)
 
 	// User routes (protected)
-	users := api.Group("/users", authMiddleware)
+	users := app.Group("/users", authMiddleware)
 	users.Post("/", userHandler.CreateUser)
 	users.Get("/:id", userHandler.GetUser)
 	users.Patch("/:id", userHandler.UpdateUser)
 	users.Delete("/:id", userHandler.DeleteUser)
 
 	// Workspace routes (protected)
-	workspaces := api.Group("/workspaces", authMiddleware)
+	workspaces := app.Group("/workspaces", authMiddleware)
 	workspaces.Post("/", workspaceHandler.CreateWorkspace)
 	workspaces.Get("/my", workspaceHandler.GetMyWorkspaces)
 	workspaces.Get("/:id", workspaceHandler.GetWorkspace)
@@ -75,7 +73,7 @@ func SetupRoutes(app *fiber.App, jwtManager *util.JWTManager, authHandler *handl
 	workspaces.Post("/:workspace_id/workflows", workflowHandler.CreateWorkflow)
 
 	// Workflow routes (protected)
-	workflows := api.Group("/workflows", authMiddleware)
+	workflows := app.Group("/workflows", authMiddleware)
 	workflows.Get("/:id", workflowHandler.GetWorkflow)
 	workflows.Put("/:id", workflowHandler.UpdateWorkflow)
 	workflows.Delete("/:id", workflowHandler.DeleteWorkflow)
@@ -87,33 +85,33 @@ func SetupRoutes(app *fiber.App, jwtManager *util.JWTManager, authHandler *handl
 	workflows.Get("/:workflow_id/runs", workflowRunHandler.ListWorkflowRuns)
 
 	// Workflow Edge routes (protected)
-	edges := api.Group("/workflow-edges", authMiddleware)
+	edges := app.Group("/workflow-edges", authMiddleware)
 	edges.Post("/", workflowEdgeHandler.CreateWorkflowEdge)
 	edges.Get("/:id", workflowEdgeHandler.GetWorkflowEdge)
 	edges.Put("/:id", workflowEdgeHandler.UpdateWorkflowEdge)
 	edges.Delete("/:id", workflowEdgeHandler.DeleteWorkflowEdge)
 
 	// Workflow Node routes (protected)
-	nodes := api.Group("/workflow-nodes", authMiddleware)
+	nodes := app.Group("/workflow-nodes", authMiddleware)
 	nodes.Post("/", workflowNodeHandler.CreateWorkflowNode)
 	nodes.Get("/:id", workflowNodeHandler.GetWorkflowNode)
 	nodes.Put("/:id", workflowNodeHandler.UpdateWorkflowNode)
 	nodes.Delete("/:id", workflowNodeHandler.DeleteWorkflowNode)
 
 	// Workflow Run routes (protected)
-	workflowRuns := api.Group("/workflow-runs", authMiddleware)
+	workflowRuns := app.Group("/workflow-runs", authMiddleware)
 	workflowRuns.Get("/:id", workflowRunHandler.GetWorkflowRun)
 	workflowRuns.Patch("/:id/status", workflowRunHandler.UpdateWorkflowRunStatus)
 	workflowRuns.Get("/:run_id/logs", nodeRunLogHandler.GetNodeRunLogsByRunID)
 
 	// Node Run Log routes (protected)
-	nodeRunLogs := api.Group("/node-run-logs", authMiddleware)
+	nodeRunLogs := app.Group("/node-run-logs", authMiddleware)
 	nodeRunLogs.Post("/", nodeRunLogHandler.CreateNodeRunLog)
 	nodeRunLogs.Get("/:id", nodeRunLogHandler.GetNodeRunLog)
 	nodeRunLogs.Patch("/:id", nodeRunLogHandler.UpdateNodeRunLog)
 
 	// Node Template routes (protected)
-	nodeTemplates := api.Group("/node-templates", authMiddleware)
+	nodeTemplates := app.Group("/node-templates", authMiddleware)
 	nodeTemplates.Get("/", nodeTemplateHandler.ListNodeTemplates)
 	nodeTemplates.Get("/:id", nodeTemplateHandler.GetNodeTemplate)
 

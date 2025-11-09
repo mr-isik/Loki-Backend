@@ -101,3 +101,16 @@ func (s *authService) Login(ctx context.Context, req *domain.LoginRequest) (*dom
 		RefreshToken: refreshToken,
 	}, nil
 }
+
+// RefreshToken refreshes the access token using a valid refresh token
+func (s *authService) RefreshToken(ctx context.Context, req *domain.RefreshTokenRequest) (*domain.RefreshTokenResponse, error) {
+
+	accessToken, err := s.jwtManager.RefreshAccessToken(req.RefreshToken)
+	if err != nil {
+		return nil, domain.ErrInvalidRefreshToken
+	}
+
+	return &domain.RefreshTokenResponse{
+		AccessToken: accessToken,
+	}, nil
+}

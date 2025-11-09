@@ -144,3 +144,38 @@ func (h *AuthHandler) GetMe(c *fiber.Ctx) error {
 		"name":  name,
 	})
 }
+
+// RefreshToken handles refreshing the access token
+// @Summary Refresh access token
+// @Description Refresh the access token using a valid refresh token
+// @Tags Authentication
+// @Accept json
+// @Produce json
+// @Param request body domain.RefreshTokenRequest true "Refresh token request"
+// @Success 200 {object} domain.RefreshTokenResponse
+// @Failure 400 {object} ErrorResponse
+func (h *AuthHandler) RefreshToken(c *fiber.Ctx) error {
+	var req domain.RefreshTokenRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
+			Error:   "invalid_request",
+			Message: "Invalid request body",
+		})
+	}
+
+	resp, err := h.service.RefreshToken(c.Context(), &req)
+	if err != nil {
+		if errors.Is(err, domain.ErrInvalidRefreshToken) {
+			return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
+				Error:   "invalid_refresh_token",
+				Message: "The provided refresh token is invalid",
+			})
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{
+			Error:   "internal_error",
+			Message: "Failed to refresh access token",
+		})
+	}
+
+	return c.JSON(resp)
+}

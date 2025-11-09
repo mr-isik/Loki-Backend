@@ -104,3 +104,13 @@ func (m *JWTManager) validateToken(tokenString, secret string) (*TokenClaims, er
 
 	return claims, nil
 }
+
+func (m *JWTManager) RefreshAccessToken(refreshTokenString string) (string, error) {
+	claims, err := m.ValidateRefreshToken(refreshTokenString)
+
+	if err != nil {
+		return "", err
+	}
+
+	return m.GenerateAccessToken(claims.UserID, claims.Email, claims.Name)
+}

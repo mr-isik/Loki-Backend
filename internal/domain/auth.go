@@ -1,6 +1,13 @@
 package domain
 
-import "context"
+import (
+	"context"
+	"errors"
+)
+
+var (
+	ErrInvalidRefreshToken = errors.New("invalid refresh token")
+)
 
 type RegisterRequest struct {
 	Email    string `json:"email" validate:"required,email"`
@@ -23,7 +30,16 @@ type LoginResponse struct {
 	AccessToken  string `json:"access_token"`
 }
 
+type RefreshTokenRequest struct {
+	RefreshToken string `json:"refresh_token" validate:"required"`
+}
+
+type RefreshTokenResponse struct {
+	AccessToken string `json:"access_token"`
+}
+
 type AuthService interface {
 	Register(ctx context.Context, req *RegisterRequest) (*RegisterResponse, error)
 	Login(ctx context.Context, req *LoginRequest) (*LoginResponse, error)
+	RefreshToken(ctx context.Context, req *RefreshTokenRequest) (*RefreshTokenResponse, error)
 }
