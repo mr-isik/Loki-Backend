@@ -1,6 +1,8 @@
 package router
 
 import (
+	"os"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
@@ -21,7 +23,7 @@ func SetupRoutes(app *fiber.App, jwtManager *util.JWTManager, authHandler *handl
 		Format: "[${time}] ${status} - ${method} ${path} - ${latency}\n",
 	}))
 	app.Use(cors.New(cors.Config{
-		AllowOrigins: "*",
+		AllowOrigins: os.Getenv("CLIENT_URL"),
 		AllowMethods: "GET,POST,PUT,PATCH,DELETE,OPTIONS",
 		AllowHeaders: "Origin, Content-Type, Accept, Authorization, X-User-ID",
 	}))

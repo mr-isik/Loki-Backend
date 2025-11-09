@@ -92,3 +92,4 @@ local/
 
 # GoReleaser
 dist/
+.env

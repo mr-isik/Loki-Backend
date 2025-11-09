@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/joho/godotenv"
 	"github.com/mr-isik/loki-backend/internal/database"
 	"github.com/mr-isik/loki-backend/internal/handler"
 	"github.com/mr-isik/loki-backend/internal/repository"
@@ -41,9 +40,6 @@ import (
 // @description Type "Bearer" followed by a space and JWT token.
 
 func main() {
-	if err := godotenv.Load(); err != nil {
-		log.Println("⚠️ Error loading .env file, proceeding with system environment variables")
-	}
 
 	dbConfig := database.NewConfig(
 		getEnv("DB_HOST", "localhost"),
@@ -65,12 +61,11 @@ func main() {
 		log.Fatalf("❌ Failed to run migrations: %v", err)
 	}
 
-	// Initialize JWT Manager
 	jwtManager := util.NewJWTManager(
 		getEnv("JWT_ACCESS_SECRET", "your-super-secret-access-key-change-this-in-production"),
 		getEnv("JWT_REFRESH_SECRET", "your-super-secret-refresh-key-change-this-in-production"),
-		15*time.Minute, // Access token TTL: 15 minutes
-		7*24*time.Hour, // Refresh token TTL: 7 days
+		15*time.Minute,
+		7*24*time.Hour,
 	)
 
 	userRepo := repository.NewUserRepository(db.Pool)
