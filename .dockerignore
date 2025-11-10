@@ -36,15 +36,26 @@ Thumbs.db
 # Git
 .git/
 .gitignore
+.gitattributes
 
 # Docker
 Dockerfile
 docker-compose.yml
+docker-compose.prod.yml
 .dockerignore
 
 # Documentation
 *.md
 README.md
+docs/*.md
 
 # Logs
 *.log
+build-errors.log
+
+# Air tmp directory
+tmp/
+
+# Testing
+*_test.go
+testdata/

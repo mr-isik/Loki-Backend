@@ -153,6 +153,18 @@ definitions:
       type_key:
         type: string
     type: object
+  domain.RefreshTokenRequest:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
+  domain.RefreshTokenResponse:
+    properties:
+      access_token:
+        type: string
+    type: object
   domain.RegisterRequest:
     properties:
       email:
@@ -362,8 +374,6 @@ definitions:
       id:
         type: string
       name:
-        type: string
-      owner_user_id:
         type: string
     type: object
   handler.ErrorResponse:
@@ -1816,8 +1826,9 @@ paths:
         "200":
           description: Returns array of workspaces
           schema:
-            additionalProperties: true
-            type: object
+            items:
+              $ref: '#/definitions/domain.WorkspaceResponse'
+            type: array
         "401":
           description: Unauthorized
           schema:

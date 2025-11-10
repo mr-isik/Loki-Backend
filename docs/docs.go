@@ -1939,8 +1939,10 @@ const docTemplate = `{
                     "200": {
                         "description": "Returns array of workspaces",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/domain.WorkspaceResponse"
+                            }
                         }
                     },
                     "401": {
@@ -2499,6 +2501,25 @@ const docTemplate = `{
                 }
             }
         },
+        "domain.RefreshTokenRequest": {
+            "type": "object",
+            "required": [
+                "refresh_token"
+            ],
+            "properties": {
+                "refresh_token": {
+                    "type": "string"
+                }
+            }
+        },
+        "domain.RefreshTokenResponse": {
+            "type": "object",
+            "properties": {
+                "access_token": {
+                    "type": "string"
+                }
+            }
+        },
         "domain.RegisterRequest": {
             "type": "object",
             "required": [
@@ -2809,9 +2830,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "name": {
-                    "type": "string"
-                },
-                "owner_user_id": {
                     "type": "string"
                 }
             }

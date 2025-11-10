@@ -2,8 +2,8 @@ services:
   # PostgreSQL Database
   postgres:
     image: postgres:16-alpine
-    container_name: loki-postgres
-    restart: unless-stopped
+    container_name: loki-postgres-prod
+    restart: always
     environment:
       POSTGRES_USER: "${DB_USER}"
       POSTGRES_PASSWORD: "${DB_PASSWORD}"
@@ -16,26 +16,20 @@ services:
       - loki-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
-      interval: 10s
-      timeout: 5s
+      interval: 30s
+      timeout: 10s
       retries: 5
 
-  # Go Backend Application - Development Mode
+  # Go Backend Application - Production Mode
   backend:
     build:
       context: .
       dockerfile: Dockerfile
-      target: development
-    container_name: loki-backend-dev
-    restart: unless-stopped
+      target: production
+    container_name: loki-backend-prod
+    restart: always
     ports:
       - "3000:3000"
-    volumes:
-      # Mount source code for hot reload
-      - .:/app
-      # Exclude tmp and vendor directories
-      - /app/tmp
-      - /app/vendor
     depends_on:
       postgres:
         condition: service_healthy
@@ -44,7 +38,16 @@ services:
     env_file:
       - .env
     environment:
-      - GO_ENV=development
+      - GO_ENV=production
+    # Production optimizations
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 1G
+        reservations:
+          cpus: "0.5"
+          memory: 256M
 
 volumes:
   postgres_data:
