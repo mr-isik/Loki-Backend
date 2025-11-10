@@ -29,18 +29,16 @@ type UpdateWorkspaceRequest struct {
 }
 
 type WorkspaceResponse struct {
-	ID          uuid.UUID `json:"id"`
-	OwnerUserID uuid.UUID `json:"owner_user_id"`
-	Name        string    `json:"name"`
-	CreatedAt   time.Time `json:"created_at"`
+	ID        uuid.UUID `json:"id"`
+	Name      string    `json:"name"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 func (w *Workspace) ToResponse() *WorkspaceResponse {
 	return &WorkspaceResponse{
-		ID:          w.ID,
-		OwnerUserID: w.OwnerUserID,
-		Name:        w.Name,
-		CreatedAt:   w.CreatedAt,
+		ID:        w.ID,
+		Name:      w.Name,
+		CreatedAt: w.CreatedAt,
 	}
 }
 

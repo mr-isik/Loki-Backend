@@ -2,7 +2,6 @@ package handler
 
 import (
 	"errors"
-	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
@@ -102,7 +101,7 @@ func (h *WorkspaceHandler) GetWorkspace(c *fiber.Ctx) error {
 // @Tags Workspaces
 // @Produce json
 // @Security BearerAuth
-// @Success 200 {object} map[string]interface{} "Returns array of workspaces"
+// @Success 200 {object} []domain.WorkspaceResponse "Returns array of workspaces"
 // @Failure 401 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
 // @Router /workspaces/my [get]
@@ -118,36 +117,6 @@ func (h *WorkspaceHandler) GetMyWorkspaces(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(workspaces)
-}
-
-// ListWorkspaces handles retrieving all workspaces with pagination
-// GET /api/workspaces?page=1&page_size=10
-func (h *WorkspaceHandler) ListWorkspaces(c *fiber.Ctx) error {
-	page, _ := strconv.Atoi(c.Query("page", "1"))
-	pageSize, _ := strconv.Atoi(c.Query("page_size", "10"))
-
-	workspaces, total, err := h.service.ListWorkspaces(c.Context(), page, pageSize)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{
-			Error:   "internal_error",
-			Message: "Failed to list workspaces",
-		})
-	}
-
-	totalPages := int(total) / pageSize
-	if int(total)%pageSize != 0 {
-		totalPages++
-	}
-
-	response := PaginatedResponse{
-		Data:       workspaces,
-		Page:       page,
-		PageSize:   pageSize,
-		Total:      total,
-		TotalPages: totalPages,
-	}
-
-	return c.JSON(response)
 }
 
 // UpdateWorkspace handles updating a workspace
