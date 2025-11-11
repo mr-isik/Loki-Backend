@@ -109,7 +109,7 @@ func (h *WorkflowEdgeHandler) GetWorkflowEdge(c *fiber.Ctx) error {
 // @Produce json
 // @Security BearerAuth
 // @Param workflow_id path string true "Workflow ID (UUID)"
-// @Success 200 {object} map[string]interface{} "Returns edges array"
+// @Success 200 {object} []domain.WorkflowEdge "Returns edges array"
 // @Failure 400 {object} ErrorResponse
 // @Failure 401 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse

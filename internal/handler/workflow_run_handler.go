@@ -107,9 +107,9 @@ func (h *WorkflowRunHandler) GetWorkflowRun(c *fiber.Ctx) error {
 // @Produce json
 // @Security BearerAuth
 // @Param workflow_id path string true "Workflow ID (UUID)"
-// @Param limit query int false "Limit" default(20)
-// @Param offset query int false "Offset" default(0)
-// @Success 200 {object} map[string]interface{} "Returns runs array and total count"
+// @Param page query int false "Page number (1-based)" default(1)
+// @Param page_size query int false "Items per page" default(20)
+// @Success 200 {object} domain.PaginatedResponse "Returns paginated runs"
 // @Failure 400 {object} ErrorResponse
 // @Failure 401 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
@@ -125,10 +125,21 @@ func (h *WorkflowRunHandler) ListWorkflowRuns(c *fiber.Ctx) error {
 	}
 
 	// Parse pagination parameters
-	limit, _ := strconv.Atoi(c.Query("limit", "20"))
-	offset, _ := strconv.Atoi(c.Query("offset", "0"))
+	page, _ := strconv.Atoi(c.Query("page", "1"))
+	pageSize, _ := strconv.Atoi(c.Query("page_size", "20"))
 
-	runs, total, err := h.service.ListWorkflowRuns(c.Context(), workflowID, limit, offset)
+	// Validate pagination parameters
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 || pageSize > 100 {
+		pageSize = 20
+	}
+
+	// Calculate offset from page number
+	offset := (page - 1) * pageSize
+
+	runs, total, err := h.service.ListWorkflowRuns(c.Context(), workflowID, pageSize, offset)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{
 			Error:   "internal_error",
@@ -136,12 +147,8 @@ func (h *WorkflowRunHandler) ListWorkflowRuns(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.JSON(fiber.Map{
-		"runs":   runs,
-		"total":  total,
-		"limit":  limit,
-		"offset": offset,
-	})
+	response := domain.NewPaginatedResponse(runs, total, page, pageSize)
+	return c.JSON(response)
 }
 
 // UpdateWorkflowRunStatus handles updating the status of a workflow run

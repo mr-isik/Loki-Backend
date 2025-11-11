@@ -107,6 +107,52 @@ const docTemplate = `{
                 }
             }
         },
+        "/auth/refresh-token": {
+            "post": {
+                "description": "Refresh the access token using a valid refresh token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Refresh access token",
+                "parameters": [
+                    {
+                        "description": "Refresh token request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/domain.RefreshTokenRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/domain.RefreshTokenResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/auth/register": {
             "post": {
                 "description": "Create a new user account and receive access/refresh tokens",
@@ -189,11 +235,8 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/domain.NodeRunLogResponse"
-                        }
+                    "204": {
+                        "description": "No Content"
                     },
                     "400": {
                         "description": "Bad Request",
@@ -358,8 +401,10 @@ const docTemplate = `{
                     "200": {
                         "description": "Returns templates array and count",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/domain.NodeTemplateResponse"
+                            }
                         }
                     },
                     "401": {
@@ -1269,7 +1314,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Retrieve all node execution logs for a specific workflow run",
+                "description": "Retrieve all node execution logs for a specific workflow run with pagination",
                 "produces": [
                     "application/json"
                 ],
@@ -1284,14 +1329,27 @@ const docTemplate = `{
                         "name": "run_id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number (1-based)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Items per page",
+                        "name": "page_size",
+                        "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Returns logs array and count",
+                        "description": "Returns paginated logs",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/domain.PaginatedResponse"
                         }
                     },
                     "400": {
@@ -1528,11 +1586,8 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/domain.WorkflowResponse"
-                        }
+                    "204": {
+                        "description": "No Content"
                     },
                     "400": {
                         "description": "Bad Request",
@@ -1656,8 +1711,10 @@ const docTemplate = `{
                     "200": {
                         "description": "Returns edges array",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/domain.WorkflowEdge"
+                            }
                         }
                     },
                     "400": {
@@ -1709,8 +1766,10 @@ const docTemplate = `{
                     "200": {
                         "description": "Returns nodes array",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/domain.WorkflowNode"
+                            }
                         }
                     },
                     "400": {
@@ -1759,25 +1818,24 @@ const docTemplate = `{
                     },
                     {
                         "type": "integer",
-                        "default": 20,
-                        "description": "Limit",
-                        "name": "limit",
+                        "default": 1,
+                        "description": "Page number (1-based)",
+                        "name": "page",
                         "in": "query"
                     },
                     {
                         "type": "integer",
-                        "default": 0,
-                        "description": "Offset",
-                        "name": "offset",
+                        "default": 20,
+                        "description": "Items per page",
+                        "name": "page_size",
                         "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Returns runs array and total count",
+                        "description": "Returns paginated runs",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/domain.PaginatedResponse"
                         }
                     },
                     "400": {
@@ -1927,7 +1985,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Retrieve all workspaces owned by the authenticated user",
+                "description": "Retrieve all workspaces owned by the authenticated user with pagination",
                 "produces": [
                     "application/json"
                 ],
@@ -1935,14 +1993,27 @@ const docTemplate = `{
                     "Workspaces"
                 ],
                 "summary": "Get my workspaces",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number (1-based)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Items per page",
+                        "name": "page_size",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "description": "Returns array of workspaces",
+                        "description": "Returns paginated workspaces",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/domain.WorkspaceResponse"
-                            }
+                            "$ref": "#/definitions/domain.PaginatedResponse"
                         }
                     },
                     "401": {
@@ -2174,14 +2245,14 @@ const docTemplate = `{
                     {
                         "type": "integer",
                         "default": 1,
-                        "description": "Page number",
+                        "description": "Page number (1-based)",
                         "name": "page",
                         "in": "query"
                     },
                     {
                         "type": "integer",
-                        "default": 10,
-                        "description": "Page size",
+                        "default": 20,
+                        "description": "Items per page",
                         "name": "page_size",
                         "in": "query"
                     }
@@ -2190,8 +2261,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Returns paginated workflows",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/domain.PaginatedResponse"
                         }
                     },
                     "400": {
@@ -2250,11 +2320,8 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/domain.WorkflowResponse"
-                        }
+                    "204": {
+                        "description": "No Content"
                     },
                     "400": {
                         "description": "Bad Request",
@@ -2501,6 +2568,24 @@ const docTemplate = `{
                 }
             }
         },
+        "domain.PaginatedResponse": {
+            "type": "object",
+            "properties": {
+                "data": {},
+                "page": {
+                    "type": "integer"
+                },
+                "page_size": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                },
+                "total_pages": {
+                    "type": "integer"
+                }
+            }
+        },
         "domain.RefreshTokenRequest": {
             "type": "object",
             "required": [
@@ -2694,6 +2779,29 @@ const docTemplate = `{
                 }
             }
         },
+        "domain.WorkflowEdge": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "source_handle": {
+                    "type": "string"
+                },
+                "source_node_id": {
+                    "type": "string"
+                },
+                "target_handle": {
+                    "type": "string"
+                },
+                "target_node_id": {
+                    "type": "string"
+                },
+                "workflow_id": {
+                    "type": "string"
+                }
+            }
+        },
         "domain.WorkflowEdgeResponse": {
             "type": "object",
             "properties": {
@@ -2710,6 +2818,30 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "target_node_id": {
+                    "type": "string"
+                },
+                "workflow_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "domain.WorkflowNode": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "id": {
+                    "type": "string"
+                },
+                "position_x": {
+                    "type": "number"
+                },
+                "position_y": {
+                    "type": "number"
+                },
+                "template_id": {
                     "type": "string"
                 },
                 "workflow_id": {
@@ -2860,7 +2992,7 @@ const docTemplate = `{
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
 	Host:             "localhost:3000",
-	BasePath:         "/api",
+	BasePath:         "",
 	Schemes:          []string{"http", "https"},
 	Title:            "Loki Backend API",
 	Description:      "Workflow automation backend service with authentication",

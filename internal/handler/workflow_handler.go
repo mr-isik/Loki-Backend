@@ -2,7 +2,6 @@ package handler
 
 import (
 	"errors"
-	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
@@ -29,7 +28,7 @@ func NewWorkflowHandler(service domain.WorkflowService) *WorkflowHandler {
 // @Security BearerAuth
 // @Param workspace_id path string true "Workspace ID (UUID)"
 // @Param request body domain.CreateWorkflowRequest true "Workflow details"
-// @Success 201 {object} domain.WorkflowResponse
+// @Success 204
 // @Failure 400 {object} ErrorResponse
 // @Failure 401 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
@@ -127,9 +126,9 @@ func (h *WorkflowHandler) GetWorkflow(c *fiber.Ctx) error {
 // @Produce json
 // @Security BearerAuth
 // @Param workspace_id path string true "Workspace ID (UUID)"
-// @Param page query int false "Page number" default(1)
-// @Param page_size query int false "Page size" default(10)
-// @Success 200 {object} map[string]interface{} "Returns paginated workflows"
+// @Param page query int false "Page number (1-based)" default(1)
+// @Param page_size query int false "Items per page" default(20)
+// @Success 200 {object} domain.PaginatedResponse "Returns paginated workflows"
 // @Failure 400 {object} ErrorResponse
 // @Failure 401 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
@@ -146,8 +145,16 @@ func (h *WorkflowHandler) GetWorkspaceWorkflows(c *fiber.Ctx) error {
 		})
 	}
 
-	page, _ := strconv.Atoi(c.Query("page", "1"))
-	pageSize, _ := strconv.Atoi(c.Query("page_size", "10"))
+	page := c.QueryInt("page", 1)
+	pageSize := c.QueryInt("page_size", 20)
+
+	// Validate pagination parameters
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 || pageSize > 100 {
+		pageSize = 20
+	}
 
 	workflows, total, err := h.service.GetWorkspaceWorkflows(c.Context(), workspaceID, userID, page, pageSize)
 	if err != nil {
@@ -163,19 +170,7 @@ func (h *WorkflowHandler) GetWorkspaceWorkflows(c *fiber.Ctx) error {
 		})
 	}
 
-	totalPages := int(total) / pageSize
-	if int(total)%pageSize != 0 {
-		totalPages++
-	}
-
-	response := PaginatedResponse{
-		Data:       workflows,
-		Page:       page,
-		PageSize:   pageSize,
-		Total:      total,
-		TotalPages: totalPages,
-	}
-
+	response := domain.NewPaginatedResponse(workflows, int(total), page, pageSize)
 	return c.JSON(response)
 }
 
@@ -312,7 +307,7 @@ func (h *WorkflowHandler) PublishWorkflow(c *fiber.Ctx) error {
 		})
 	}
 
-	workflow, err := h.service.PublishWorkflow(c.Context(), id, userID)
+	err = h.service.PublishWorkflow(c.Context(), id, userID)
 	if err != nil {
 		if errors.Is(err, domain.ErrWorkflowNotFound) {
 			return c.Status(fiber.StatusNotFound).JSON(ErrorResponse{
@@ -332,7 +327,7 @@ func (h *WorkflowHandler) PublishWorkflow(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.JSON(workflow)
+	return c.SendStatus(fiber.StatusNoContent)
 }
 
 // ArchiveWorkflow handles archiving a workflow
@@ -342,7 +337,7 @@ func (h *WorkflowHandler) PublishWorkflow(c *fiber.Ctx) error {
 // @Produce json
 // @Security BearerAuth
 // @Param id path string true "Workflow ID (UUID)"
-// @Success 200 {object} domain.WorkflowResponse
+// @Success 204
 // @Failure 400 {object} ErrorResponse
 // @Failure 401 {object} ErrorResponse
 // @Failure 403 {object} ErrorResponse
@@ -361,7 +356,7 @@ func (h *WorkflowHandler) ArchiveWorkflow(c *fiber.Ctx) error {
 		})
 	}
 
-	workflow, err := h.service.ArchiveWorkflow(c.Context(), id, userID)
+	err = h.service.ArchiveWorkflow(c.Context(), id, userID)
 	if err != nil {
 		if errors.Is(err, domain.ErrWorkflowNotFound) {
 			return c.Status(fiber.StatusNotFound).JSON(ErrorResponse{
@@ -381,5 +376,5 @@ func (h *WorkflowHandler) ArchiveWorkflow(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.JSON(workflow)
+	return c.SendStatus(fiber.StatusNoContent)
 }

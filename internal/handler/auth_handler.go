@@ -102,7 +102,7 @@ func (h *AuthHandler) Login(c *fiber.Ctx) error {
 	resp, err := h.service.Login(c.Context(), &req)
 	if err != nil {
 		if errors.Is(err, domain.ErrInvalidCredentials) {
-			return c.Status(fiber.StatusUnauthorized).JSON(ErrorResponse{
+			return c.Status(fiber.StatusForbidden).JSON(ErrorResponse{
 				Error:   "invalid_credentials",
 				Message: "Invalid email or password",
 			})
@@ -154,6 +154,8 @@ func (h *AuthHandler) GetMe(c *fiber.Ctx) error {
 // @Param request body domain.RefreshTokenRequest true "Refresh token request"
 // @Success 200 {object} domain.RefreshTokenResponse
 // @Failure 400 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /auth/refresh-token [post]
 func (h *AuthHandler) RefreshToken(c *fiber.Ctx) error {
 	var req domain.RefreshTokenRequest
 	if err := c.BodyParser(&req); err != nil {

@@ -83,7 +83,7 @@ type NodeRunLogRepository interface {
 }
 
 type NodeRunLogService interface {
-	CreateNodeRunLog(ctx context.Context, req *CreateNodeRunLogRequest) (*NodeRunLogResponse, error)
+	CreateNodeRunLog(ctx context.Context, req *CreateNodeRunLogRequest) error
 	GetNodeRunLog(ctx context.Context, id uuid.UUID) (*NodeRunLogResponse, error)
 	GetNodeRunLogsByRunID(ctx context.Context, runID uuid.UUID) ([]*NodeRunLogResponse, error)
 	UpdateNodeRunLog(ctx context.Context, id uuid.UUID, req *UpdateNodeRunLogRequest) error

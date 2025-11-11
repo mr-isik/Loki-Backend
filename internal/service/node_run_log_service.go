@@ -17,13 +17,13 @@ func NewNodeRunLogService(repo domain.NodeRunLogRepository) domain.NodeRunLogSer
 	}
 }
 
-func (s *nodeRunLogService) CreateNodeRunLog(ctx context.Context, req *domain.CreateNodeRunLogRequest) (*domain.NodeRunLogResponse, error) {
-	log, err := s.repo.Create(ctx, req)
+func (s *nodeRunLogService) CreateNodeRunLog(ctx context.Context, req *domain.CreateNodeRunLogRequest) error {
+	_, err := s.repo.Create(ctx, req)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return log.ToResponse(), nil
+	return nil
 }
 
 func (s *nodeRunLogService) GetNodeRunLog(ctx context.Context, id uuid.UUID) (*domain.NodeRunLogResponse, error) {

@@ -165,7 +165,7 @@ func (h *WorkflowNodeHandler) DeleteWorkflowNode(c *fiber.Ctx) error {
 // @Produce json
 // @Security BearerAuth
 // @Param workflow_id path string true "Workflow ID (UUID)"
-// @Success 200 {object} map[string]interface{} "Returns nodes array"
+// @Success 200 {object} []domain.WorkflowNode "Returns nodes array"
 // @Failure 400 {object} ErrorResponse
 // @Failure 401 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse

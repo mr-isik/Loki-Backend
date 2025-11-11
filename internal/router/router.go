@@ -47,8 +47,8 @@ func SetupRoutes(app *fiber.App, jwtManager *util.JWTManager, authHandler *handl
 	auth := app.Group("/auth")
 	auth.Post("/register", authHandler.Register)
 	auth.Post("/login", authHandler.Login)
-	auth.Get("/me", middleware.AuthMiddleware(jwtManager), authHandler.GetMe)
 	auth.Post("/refresh-token", authHandler.RefreshToken)
+	auth.Get("/me", middleware.AuthMiddleware(jwtManager), authHandler.GetMe)
 
 	// Create auth middleware
 	authMiddleware := middleware.AuthMiddleware(jwtManager)

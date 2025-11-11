@@ -97,11 +97,13 @@ func (h *WorkspaceHandler) GetWorkspace(c *fiber.Ctx) error {
 
 // GetMyWorkspaces handles retrieving all workspaces for the authenticated user
 // @Summary Get my workspaces
-// @Description Retrieve all workspaces owned by the authenticated user
+// @Description Retrieve all workspaces owned by the authenticated user with pagination
 // @Tags Workspaces
 // @Produce json
 // @Security BearerAuth
-// @Success 200 {object} []domain.WorkspaceResponse "Returns array of workspaces"
+// @Param page query int false "Page number (1-based)" default(1)
+// @Param page_size query int false "Items per page" default(20)
+// @Success 200 {object} domain.PaginatedResponse "Returns paginated workspaces"
 // @Failure 401 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
 // @Router /workspaces/my [get]
@@ -116,7 +118,37 @@ func (h *WorkspaceHandler) GetMyWorkspaces(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.JSON(workspaces)
+	// Pagination için manuel olarak yapalım
+	page := c.QueryInt("page", 1)
+	pageSize := c.QueryInt("page_size", 20)
+
+	// Validate pagination parameters
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 || pageSize > 100 {
+		pageSize = 20
+	}
+
+	// Calculate offset and limit
+	total := len(workspaces)
+	offset := (page - 1) * pageSize
+	end := offset + pageSize
+
+	// Adjust bounds
+	if offset >= total {
+		offset = 0
+		end = 0
+		workspaces = []*domain.WorkspaceResponse{}
+	} else {
+		if end > total {
+			end = total
+		}
+		workspaces = workspaces[offset:end]
+	}
+
+	response := domain.NewPaginatedResponse(workspaces, total, page, pageSize)
+	return c.JSON(response)
 }
 
 // UpdateWorkspace handles updating a workspace

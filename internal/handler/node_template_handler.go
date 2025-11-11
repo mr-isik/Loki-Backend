@@ -24,7 +24,7 @@ func NewNodeTemplateHandler(service domain.NodeTemplateService) *NodeTemplateHan
 // @Tags Node Templates
 // @Produce json
 // @Security BearerAuth
-// @Success 200 {object} map[string]interface{} "Returns templates array and count"
+// @Success 200 {object} []domain.NodeTemplateResponse "Returns templates array and count"
 // @Failure 401 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
 // @Router /node-templates [get]

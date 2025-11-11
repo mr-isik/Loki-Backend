@@ -79,6 +79,6 @@ type WorkflowService interface {
 	GetWorkspaceWorkflows(ctx context.Context, workspaceID uuid.UUID, userID uuid.UUID, page, pageSize int) ([]*WorkflowResponse, int64, error)
 	UpdateWorkflow(ctx context.Context, id uuid.UUID, userID uuid.UUID, req *UpdateWorkflowRequest) (*WorkflowResponse, error)
 	DeleteWorkflow(ctx context.Context, id uuid.UUID, userID uuid.UUID) error
-	PublishWorkflow(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*WorkflowResponse, error)
-	ArchiveWorkflow(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*WorkflowResponse, error)
+	PublishWorkflow(ctx context.Context, id uuid.UUID, userID uuid.UUID) error
+	ArchiveWorkflow(ctx context.Context, id uuid.UUID, userID uuid.UUID) error
 }

@@ -26,7 +26,7 @@ func NewNodeRunLogHandler(service domain.NodeRunLogService) *NodeRunLogHandler {
 // @Produce json
 // @Security BearerAuth
 // @Param request body domain.CreateNodeRunLogRequest true "Node run log details"
-// @Success 201 {object} domain.NodeRunLogResponse
+// @Success 204
 // @Failure 400 {object} ErrorResponse
 // @Failure 401 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
@@ -40,7 +40,7 @@ func (h *NodeRunLogHandler) CreateNodeRunLog(c *fiber.Ctx) error {
 		})
 	}
 
-	log, err := h.service.CreateNodeRunLog(c.Context(), &req)
+	err := h.service.CreateNodeRunLog(c.Context(), &req)
 	if err != nil {
 		if errors.Is(err, domain.ErrForeignKeyViolation) {
 			return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
@@ -54,7 +54,7 @@ func (h *NodeRunLogHandler) CreateNodeRunLog(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(log)
+	return c.SendStatus(fiber.StatusNoContent)
 }
 
 // GetNodeRunLog handles retrieving a node run log by ID
@@ -99,12 +99,14 @@ func (h *NodeRunLogHandler) GetNodeRunLog(c *fiber.Ctx) error {
 
 // GetNodeRunLogsByRunID handles retrieving node run logs for a workflow run
 // @Summary Get node run logs by workflow run ID
-// @Description Retrieve all node execution logs for a specific workflow run
+// @Description Retrieve all node execution logs for a specific workflow run with pagination
 // @Tags Node Run Logs
 // @Produce json
 // @Security BearerAuth
 // @Param run_id path string true "Workflow Run ID (UUID)"
-// @Success 200 {object} map[string]interface{} "Returns logs array and count"
+// @Param page query int false "Page number (1-based)" default(1)
+// @Param page_size query int false "Items per page" default(20)
+// @Success 200 {object} domain.PaginatedResponse "Returns paginated logs"
 // @Failure 400 {object} ErrorResponse
 // @Failure 401 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
@@ -127,10 +129,37 @@ func (h *NodeRunLogHandler) GetNodeRunLogsByRunID(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.JSON(fiber.Map{
-		"logs":  logs,
-		"count": len(logs),
-	})
+	// Pagination için manuel olarak yapalım (service'de değişiklik yapmadan)
+	page := c.QueryInt("page", 1)
+	pageSize := c.QueryInt("page_size", 20)
+
+	// Validate pagination parameters
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 || pageSize > 100 {
+		pageSize = 20
+	}
+
+	// Calculate offset and limit
+	total := len(logs)
+	offset := (page - 1) * pageSize
+	end := offset + pageSize
+
+	// Adjust bounds
+	if offset >= total {
+		offset = 0
+		end = 0
+		logs = []*domain.NodeRunLogResponse{}
+	} else {
+		if end > total {
+			end = total
+		}
+		logs = logs[offset:end]
+	}
+
+	response := domain.NewPaginatedResponse(logs, total, page, pageSize)
+	return c.JSON(response)
 }
 
 // UpdateNodeRunLog handles updating a node run log

@@ -1,4 +1,3 @@
-basePath: /api
 definitions:
   domain.CreateNodeRunLogRequest:
     properties:
@@ -153,6 +152,18 @@ definitions:
       type_key:
         type: string
     type: object
+  domain.PaginatedResponse:
+    properties:
+      data: {}
+      page:
+        type: integer
+      page_size:
+        type: integer
+      total:
+        type: integer
+      total_pages:
+        type: integer
+    type: object
   domain.RefreshTokenRequest:
     properties:
       refresh_token:
@@ -280,6 +291,21 @@ definitions:
       updated_at:
         type: string
     type: object
+  domain.WorkflowEdge:
+    properties:
+      id:
+        type: string
+      source_handle:
+        type: string
+      source_node_id:
+        type: string
+      target_handle:
+        type: string
+      target_node_id:
+        type: string
+      workflow_id:
+        type: string
+    type: object
   domain.WorkflowEdgeResponse:
     properties:
       id:
@@ -291,6 +317,22 @@ definitions:
       target_handle:
         type: string
       target_node_id:
+        type: string
+      workflow_id:
+        type: string
+    type: object
+  domain.WorkflowNode:
+    properties:
+      data:
+        additionalProperties: {}
+        type: object
+      id:
+        type: string
+      position_x:
+        type: number
+      position_y:
+        type: number
+      template_id:
         type: string
       workflow_id:
         type: string
@@ -450,6 +492,36 @@ paths:
       summary: Get current user
       tags:
       - Authentication
+  /auth/refresh-token:
+    post:
+      consumes:
+      - application/json
+      description: Refresh the access token using a valid refresh token
+      parameters:
+      - description: Refresh token request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.RefreshTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.RefreshTokenResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Refresh access token
+      tags:
+      - Authentication
   /auth/register:
     post:
       consumes:
@@ -499,10 +571,8 @@ paths:
       produces:
       - application/json
       responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/domain.NodeRunLogResponse'
+        "204":
+          description: No Content
         "400":
           description: Bad Request
           schema:
@@ -608,8 +678,9 @@ paths:
         "200":
           description: Returns templates array and count
           schema:
-            additionalProperties: true
-            type: object
+            items:
+              $ref: '#/definitions/domain.NodeTemplateResponse'
+            type: array
         "401":
           description: Unauthorized
           schema:
@@ -1191,21 +1262,31 @@ paths:
       - Workflow Runs
   /workflow-runs/{run_id}/logs:
     get:
-      description: Retrieve all node execution logs for a specific workflow run
+      description: Retrieve all node execution logs for a specific workflow run with
+        pagination
       parameters:
       - description: Workflow Run ID (UUID)
         in: path
         name: run_id
         required: true
         type: string
+      - default: 1
+        description: Page number (1-based)
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Items per page
+        in: query
+        name: page_size
+        type: integer
       produces:
       - application/json
       responses:
         "200":
-          description: Returns logs array and count
+          description: Returns paginated logs
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/domain.PaginatedResponse'
         "400":
           description: Bad Request
           schema:
@@ -1356,10 +1437,8 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/domain.WorkflowResponse'
+        "204":
+          description: No Content
         "400":
           description: Bad Request
           schema:
@@ -1439,8 +1518,9 @@ paths:
         "200":
           description: Returns edges array
           schema:
-            additionalProperties: true
-            type: object
+            items:
+              $ref: '#/definitions/domain.WorkflowEdge'
+            type: array
         "400":
           description: Bad Request
           schema:
@@ -1473,8 +1553,9 @@ paths:
         "200":
           description: Returns nodes array
           schema:
-            additionalProperties: true
-            type: object
+            items:
+              $ref: '#/definitions/domain.WorkflowNode'
+            type: array
         "400":
           description: Bad Request
           schema:
@@ -1501,24 +1582,23 @@ paths:
         name: workflow_id
         required: true
         type: string
-      - default: 20
-        description: Limit
+      - default: 1
+        description: Page number (1-based)
         in: query
-        name: limit
+        name: page
         type: integer
-      - default: 0
-        description: Offset
+      - default: 20
+        description: Items per page
         in: query
-        name: offset
+        name: page_size
         type: integer
       produces:
       - application/json
       responses:
         "200":
-          description: Returns runs array and total count
+          description: Returns paginated runs
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/domain.PaginatedResponse'
         "400":
           description: Bad Request
           schema:
@@ -1743,12 +1823,12 @@ paths:
         required: true
         type: string
       - default: 1
-        description: Page number
+        description: Page number (1-based)
         in: query
         name: page
         type: integer
-      - default: 10
-        description: Page size
+      - default: 20
+        description: Items per page
         in: query
         name: page_size
         type: integer
@@ -1758,8 +1838,7 @@ paths:
         "200":
           description: Returns paginated workflows
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/domain.PaginatedResponse'
         "400":
           description: Bad Request
           schema:
@@ -1796,10 +1875,8 @@ paths:
       produces:
       - application/json
       responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/domain.WorkflowResponse'
+        "204":
+          description: No Content
         "400":
           description: Bad Request
           schema:
@@ -1819,16 +1896,25 @@ paths:
       - Workflows
   /workspaces/my:
     get:
-      description: Retrieve all workspaces owned by the authenticated user
+      description: Retrieve all workspaces owned by the authenticated user with pagination
+      parameters:
+      - default: 1
+        description: Page number (1-based)
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Items per page
+        in: query
+        name: page_size
+        type: integer
       produces:
       - application/json
       responses:
         "200":
-          description: Returns array of workspaces
+          description: Returns paginated workspaces
           schema:
-            items:
-              $ref: '#/definitions/domain.WorkspaceResponse'
-            type: array
+            $ref: '#/definitions/domain.PaginatedResponse'
         "401":
           description: Unauthorized
           schema:

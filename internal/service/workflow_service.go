@@ -166,69 +166,69 @@ func (s *workflowService) DeleteWorkflow(ctx context.Context, id uuid.UUID, user
 }
 
 // PublishWorkflow publishes a workflow
-func (s *workflowService) PublishWorkflow(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*domain.WorkflowResponse, error) {
+func (s *workflowService) PublishWorkflow(ctx context.Context, id uuid.UUID, userID uuid.UUID) error {
 	// Get existing workflow
 	workflow, err := s.workflowRepo.GetByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, domain.ErrWorkflowNotFound) {
-			return nil, domain.ErrWorkflowNotFound
+			return domain.ErrWorkflowNotFound
 		}
-		return nil, fmt.Errorf("failed to get workflow: %w", err)
+		return fmt.Errorf("failed to get workflow: %w", err)
 	}
 
 	// Check if user is the owner of the workspace
 	isOwner, err := s.workspaceRepo.IsOwner(ctx, workflow.WorkspaceID, userID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to check workspace ownership: %w", err)
+		return fmt.Errorf("failed to check workspace ownership: %w", err)
 	}
 	if !isOwner {
-		return nil, domain.ErrUnauthorized
+		return domain.ErrUnauthorized
 	}
 
 	// Update status
 	if err := s.workflowRepo.UpdateStatus(ctx, id, domain.WorkflowStatusPublished); err != nil {
-		return nil, fmt.Errorf("failed to publish workflow: %w", err)
+		return fmt.Errorf("failed to publish workflow: %w", err)
 	}
 
 	// Get updated workflow
 	workflow, err = s.workflowRepo.GetByID(ctx, id)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get updated workflow: %w", err)
+		return fmt.Errorf("failed to get updated workflow: %w", err)
 	}
 
-	return workflow.ToResponse(), nil
+	return nil
 }
 
 // ArchiveWorkflow archives a workflow
-func (s *workflowService) ArchiveWorkflow(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*domain.WorkflowResponse, error) {
+func (s *workflowService) ArchiveWorkflow(ctx context.Context, id uuid.UUID, userID uuid.UUID) error {
 	// Get existing workflow
 	workflow, err := s.workflowRepo.GetByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, domain.ErrWorkflowNotFound) {
-			return nil, domain.ErrWorkflowNotFound
+			return domain.ErrWorkflowNotFound
 		}
-		return nil, fmt.Errorf("failed to get workflow: %w", err)
+		return fmt.Errorf("failed to get workflow: %w", err)
 	}
 
 	// Check if user is the owner of the workspace
 	isOwner, err := s.workspaceRepo.IsOwner(ctx, workflow.WorkspaceID, userID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to check workspace ownership: %w", err)
+		return fmt.Errorf("failed to check workspace ownership: %w", err)
 	}
 	if !isOwner {
-		return nil, domain.ErrUnauthorized
+		return domain.ErrUnauthorized
 	}
 
 	// Update status
 	if err := s.workflowRepo.UpdateStatus(ctx, id, domain.WorkflowStatusArchived); err != nil {
-		return nil, fmt.Errorf("failed to archive workflow: %w", err)
+		return fmt.Errorf("failed to archive workflow: %w", err)
 	}
 
 	// Get updated workflow
 	workflow, err = s.workflowRepo.GetByID(ctx, id)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get updated workflow: %w", err)
+		return fmt.Errorf("failed to get updated workflow: %w", err)
 	}
 
-	return workflow.ToResponse(), nil
+	return nil
 }
