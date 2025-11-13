@@ -752,8 +752,11 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "204": {
-                        "description": "No Content"
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/domain.WorkflowEdgeResponse"
+                        }
                     },
                     "400": {
                         "description": "Bad Request",
@@ -869,8 +872,11 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "204": {
-                        "description": "No Content"
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/domain.WorkflowEdgeResponse"
+                        }
                     },
                     "400": {
                         "description": "Bad Request",
@@ -982,8 +988,11 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "204": {
-                        "description": "No Content"
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/domain.WorkflowNodeResponse"
+                        }
                     },
                     "400": {
                         "description": "Bad Request",

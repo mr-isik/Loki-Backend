@@ -16,11 +16,11 @@ func NewWorkflowEdgeService(repo domain.WorkflowEdgeRepository) *WorkflowEdgeSer
 	return &WorkflowEdgeService{repo: repo}
 }
 
-func (s *WorkflowEdgeService) CreateWorkflowEdge(ctx context.Context, req *domain.CreateWorkflowEdgeRequest) error {
+func (s *WorkflowEdgeService) CreateWorkflowEdge(ctx context.Context, req *domain.CreateWorkflowEdgeRequest) (*domain.WorkflowEdge, error) {
 	return s.repo.Create(ctx, req)
 }
 
-func (s *WorkflowEdgeService) UpdateWorkflowEdge(ctx context.Context, id uuid.UUID, req *domain.UpdateWorkflowEdgeRequest) error {
+func (s *WorkflowEdgeService) UpdateWorkflowEdge(ctx context.Context, id uuid.UUID, req *domain.UpdateWorkflowEdgeRequest) (*domain.WorkflowEdge, error) {
 	return s.repo.Update(ctx, id, req)
 }
 

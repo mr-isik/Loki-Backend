@@ -17,23 +17,22 @@ func NewWorkflowEdgeRepository(db *pgxpool.Pool) *WorkflowEdgeRepository {
 	return &WorkflowEdgeRepository{db: db}
 }
 
-func (r *WorkflowEdgeRepository) Create(ctx context.Context, edge *domain.CreateWorkflowEdgeRequest) error {
+func (r *WorkflowEdgeRepository) Create(ctx context.Context, edge *domain.CreateWorkflowEdgeRequest) (*domain.WorkflowEdge, error) {
 	query := `
 		INSERT INTO workflow_edges (
 			id, workflow_id, source_node_id, target_node_id, source_handle, target_handle
 		)
 		SELECT 
-			gen_random_uuid(),
-			wn.workflow_id,
-			$1,
-			$2,
-			$3,
-			$4
+			$1, $2, $3, $4, $5, $6
 		FROM workflow_nodes wn
 		WHERE wn.id = $1
 	`
 
+	id := uuid.New()
+
 	_, err := r.db.Exec(ctx, query,
+		id,
+		edge.WorkflowID,
 		edge.SourceNodeID,
 		edge.TargetNodeID,
 		edge.SourceHandle,
@@ -41,13 +40,20 @@ func (r *WorkflowEdgeRepository) Create(ctx context.Context, edge *domain.Create
 	)
 
 	if err != nil {
-		return domain.ParseDBError(err)
+		return nil, domain.ParseDBError(err)
 	}
 
-	return nil
+	return &domain.WorkflowEdge{
+		ID:           id,
+		WorkflowID:   edge.WorkflowID,
+		SourceNodeID: edge.SourceNodeID,
+		TargetNodeID: edge.TargetNodeID,
+		SourceHandle: edge.SourceHandle,
+		TargetHandle: edge.TargetHandle,
+	}, nil
 }
 
-func (r *WorkflowEdgeRepository) Update(ctx context.Context, id uuid.UUID, edge *domain.UpdateWorkflowEdgeRequest) error {
+func (r *WorkflowEdgeRepository) Update(ctx context.Context, id uuid.UUID, edge *domain.UpdateWorkflowEdgeRequest) (*domain.WorkflowEdge, error) {
 	// Check if UUIDs are zero (not provided)
 	var sourceNodeID *uuid.UUID
 	if edge.SourceNodeID != uuid.Nil {
@@ -79,14 +85,20 @@ func (r *WorkflowEdgeRepository) Update(ctx context.Context, id uuid.UUID, edge 
 	)
 
 	if err != nil {
-		return domain.ParseDBError(err)
+		return nil, domain.ParseDBError(err)
 	}
 
 	if result.RowsAffected() == 0 {
-		return domain.ErrWorkflowEdgeNotFound
+		return nil, domain.ErrWorkflowEdgeNotFound
 	}
 
-	return nil
+	return &domain.WorkflowEdge{
+		ID:           id,
+		SourceNodeID: edge.SourceNodeID,
+		TargetNodeID: edge.TargetNodeID,
+		SourceHandle: edge.SourceHandle,
+		TargetHandle: edge.TargetHandle,
+	}, nil
 }
 
 func (r *WorkflowEdgeRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.WorkflowEdge, error) {

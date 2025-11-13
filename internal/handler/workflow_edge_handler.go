@@ -26,7 +26,7 @@ func NewWorkflowEdgeHandler(service *service.WorkflowEdgeService) *WorkflowEdgeH
 // @Produce json
 // @Security BearerAuth
 // @Param request body domain.CreateWorkflowEdgeRequest true "Edge details"
-// @Success 204
+// @Success 200 {object} domain.WorkflowEdgeResponse
 // @Failure 400 {object} ErrorResponse
 // @Failure 401 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
@@ -40,7 +40,8 @@ func (h *WorkflowEdgeHandler) CreateWorkflowEdge(c *fiber.Ctx) error {
 		})
 	}
 
-	if err := h.service.CreateWorkflowEdge(c.Context(), &req); err != nil {
+	edge, err := h.service.CreateWorkflowEdge(c.Context(), &req)
+	if err != nil {
 		if errors.Is(err, domain.ErrInvalidInput) {
 			return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
 				Error:   "invalid_input",
@@ -59,7 +60,7 @@ func (h *WorkflowEdgeHandler) CreateWorkflowEdge(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.SendStatus(fiber.StatusNoContent)
+	return c.JSON(edge.ToResponse())
 }
 
 // GetWorkflowEdge handles retrieving a workflow edge by ID
@@ -152,7 +153,7 @@ func (h *WorkflowEdgeHandler) GetWorkflowEdgesByWorkflow(c *fiber.Ctx) error {
 // @Security BearerAuth
 // @Param id path string true "Workflow Edge ID (UUID)"
 // @Param request body domain.UpdateWorkflowEdgeRequest true "Edge update details"
-// @Success 204
+// @Success 200 {object} domain.WorkflowEdgeResponse
 // @Failure 400 {object} ErrorResponse
 // @Failure 401 {object} ErrorResponse
 // @Failure 404 {object} ErrorResponse
@@ -176,7 +177,8 @@ func (h *WorkflowEdgeHandler) UpdateWorkflowEdge(c *fiber.Ctx) error {
 		})
 	}
 
-	if err := h.service.UpdateWorkflowEdge(c.Context(), id, &req); err != nil {
+	edge, err := h.service.UpdateWorkflowEdge(c.Context(), id, &req)
+	if err != nil {
 		if errors.Is(err, domain.ErrWorkflowEdgeNotFound) {
 			return c.Status(fiber.StatusNotFound).JSON(ErrorResponse{
 				Error:   "not_found",
@@ -201,7 +203,7 @@ func (h *WorkflowEdgeHandler) UpdateWorkflowEdge(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.SendStatus(fiber.StatusNoContent)
+	return c.JSON(edge.ToResponse())
 }
 
 // DeleteWorkflowEdge handles deleting a workflow edge

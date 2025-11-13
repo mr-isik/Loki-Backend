@@ -16,19 +16,27 @@ func NewWorkflowNodeRepository(db *pgxpool.Pool) domain.WorkflowNodeRepository {
 	return &workflowNodeRepository{db: db}
 }
 
-func (r *workflowNodeRepository) Create(ctx context.Context, workflowNode *domain.CreateWorkflowNodeRequest) error {
+func (r *workflowNodeRepository) Create(ctx context.Context, workflowNode *domain.CreateWorkflowNodeRequest) (*domain.WorkflowNode, error) {
 	query := `
 		INSERT INTO workflow_nodes (id, workflow_id, template_id, position_x, position_y, data)
 		VALUES ($1, $2, $3, $4, $5, $6)
 	`
 
-	_, err := r.db.Exec(ctx, query, uuid.New(), workflowNode.WorkflowID, workflowNode.TemplateID, workflowNode.PositionX, workflowNode.PositionY, workflowNode.Data)
+	id := uuid.New()
+	_, err := r.db.Exec(ctx, query, id, workflowNode.WorkflowID, workflowNode.TemplateID, workflowNode.PositionX, workflowNode.PositionY, workflowNode.Data)
 
 	if err != nil {
-		return domain.ParseDBError(err)
+		return nil, domain.ParseDBError(err)
 	}
 
-	return nil
+	return &domain.WorkflowNode{
+		ID:         id,
+		WorkflowID: workflowNode.WorkflowID,
+		TemplateID: workflowNode.TemplateID,
+		PositionX:  workflowNode.PositionX,
+		PositionY:  workflowNode.PositionY,
+		Data:       workflowNode.Data,
+	}, nil
 }
 
 func (r *workflowNodeRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.WorkflowNode, error) {
@@ -71,7 +79,7 @@ func (r *workflowNodeRepository) Delete(ctx context.Context, id uuid.UUID) error
 	return domain.ParseDBError(err)
 }
 
-func (r *workflowNodeRepository) GetByWorkflowID(ctx context.Context, 	workflowID uuid.UUID) ([]*domain.WorkflowNode, error) {
+func (r *workflowNodeRepository) GetByWorkflowID(ctx context.Context, workflowID uuid.UUID) ([]*domain.WorkflowNode, error) {
 	query := `
 		SELECT id, workflow_id, template_id, position_x, position_y, data
 		FROM workflow_nodes

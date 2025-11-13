@@ -18,20 +18,22 @@ func NewWorkflowNodeService(repo domain.WorkflowNodeRepository) domain.WorkflowN
 	}
 }
 
-func (s *workflowNodeService) CreateWorkflowNode(ctx context.Context, req *domain.CreateWorkflowNodeRequest) error {
+func (s *workflowNodeService) CreateWorkflowNode(ctx context.Context, req *domain.CreateWorkflowNodeRequest) (*domain.WorkflowNodeResponse, error) {
 	workflowNode := &domain.CreateWorkflowNodeRequest{
 		WorkflowID: req.WorkflowID,
 		TemplateID: req.TemplateID,
-		PositionX: req.PositionX,
-		PositionY: req.PositionY,
-		Data:     req.Data,
+		PositionX:  req.PositionX,
+		PositionY:  req.PositionY,
+		Data:       req.Data,
 	}
 
-	if err := s.repo.Create(ctx, workflowNode); err != nil {
-		return fmt.Errorf("failed to create workflow node: %w", err)
+	workflowNodeResponse, err := s.repo.Create(ctx, workflowNode)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to create workflow node: %w", err)
 	}
 
-	return nil
+	return workflowNodeResponse.ToResponse(), nil
 }
 
 func (s *workflowNodeService) GetWorkflowNode(ctx context.Context, id uuid.UUID) (*domain.WorkflowNodeResponse, error) {
@@ -58,12 +60,12 @@ func (s *workflowNodeService) UpdateWorkflowNode(ctx context.Context, id uuid.UU
 	}
 
 	workflowNodeToUpdate := &domain.UpdateWorkflowNodeRequest{
-		ID:         workflowNode.ID,
+		ID:        workflowNode.ID,
 		PositionX: &workflowNode.PositionX,
 		PositionY: &workflowNode.PositionY,
 		Data:      &workflowNode.Data,
 	}
-	
+
 	if err := s.repo.Update(ctx, workflowNodeToUpdate); err != nil {
 		return fmt.Errorf("failed to update workflow node: %w", err)
 	}

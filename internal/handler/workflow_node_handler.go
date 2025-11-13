@@ -25,7 +25,7 @@ func NewWorkflowNodeHandler(service domain.WorkflowNodeService) *WorkflowNodeHan
 // @Produce json
 // @Security BearerAuth
 // @Param request body domain.CreateWorkflowNodeRequest true "Node details"
-// @Success 204
+// @Success 200 {object} domain.WorkflowNodeResponse
 // @Failure 400 {object} ErrorResponse
 // @Failure 401 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
@@ -39,14 +39,16 @@ func (h *WorkflowNodeHandler) CreateWorkflowNode(c *fiber.Ctx) error {
 		})
 	}
 
-	if err := h.service.CreateWorkflowNode(c.Context(), &req); err != nil {
+	workflowNode, err := h.service.CreateWorkflowNode(c.Context(), &req)
+
+	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{
 			Error:   "internal_error",
 			Message: "Failed to create workflow node",
 		})
 	}
 
-	return c.SendStatus(fiber.StatusNoContent)
+	return c.JSON(workflowNode)
 }
 
 // GetWorkflowNode handles retrieving a workflow node by ID
