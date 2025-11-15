@@ -130,7 +130,6 @@ func (r *WorkflowEdgeRepository) GetByWorkflowID(ctx context.Context, workflowID
 		SELECT id, workflow_id, source_node_id, target_node_id, source_handle, target_handle
 		FROM workflow_edges
 		WHERE workflow_id = $1
-		ORDER BY created_at ASC
 	`
 
 	rows, err := r.db.Query(ctx, query, workflowID)

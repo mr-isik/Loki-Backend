@@ -2402,7 +2402,8 @@ const docTemplate = `{
                 "source_handle",
                 "source_node_id",
                 "target_handle",
-                "target_node_id"
+                "target_node_id",
+                "workflow_id"
             ],
             "properties": {
                 "source_handle": {
@@ -2415,6 +2416,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "target_node_id": {
+                    "type": "string"
+                },
+                "workflow_id": {
                     "type": "string"
                 }
             }

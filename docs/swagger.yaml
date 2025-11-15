@@ -38,11 +38,14 @@ definitions:
         type: string
       target_node_id:
         type: string
+      workflow_id:
+        type: string
     required:
     - source_handle
     - source_node_id
     - target_handle
     - target_node_id
+    - workflow_id
     type: object
   domain.CreateWorkflowNodeRequest:
     properties:
