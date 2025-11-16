@@ -12,19 +12,23 @@ var (
 )
 
 type NodeTemplate struct {
-	ID 		uuid.UUID `json:"id"`
-	Name	string    `json:"name"`
-	Description string    `json:"description"`
-	TypeKey  string    `json:"type_key"`
-	Category string    `json:"category"`
+	ID          uuid.UUID              `json:"id"`
+	Name        string                 `json:"name"`
+	Description string                 `json:"description"`
+	TypeKey     string                 `json:"type_key"`
+	Category    string                 `json:"category"`
+	Inputs      map[string]interface{} `json:"inputs,omitempty"`
+	Outputs     map[string]interface{} `json:"outputs,omitempty"`
 }
 
 type NodeTemplateResponse struct {
-	ID 		uuid.UUID `json:"id"`
-	Name	string    `json:"name"`
-	Description string    `json:"description"`
-	TypeKey  string    `json:"type_key"`
-	Category string    `json:"category"`
+	ID          uuid.UUID              `json:"id"`
+	Name        string                 `json:"name"`
+	Description string                 `json:"description"`
+	TypeKey     string                 `json:"type_key"`
+	Category    string                 `json:"category"`
+	Inputs      map[string]interface{} `json:"inputs,omitempty"`
+	Outputs     map[string]interface{} `json:"outputs,omitempty"`
 }
 
 func (nt *NodeTemplate) ToResponse() *NodeTemplateResponse {
@@ -34,6 +38,8 @@ func (nt *NodeTemplate) ToResponse() *NodeTemplateResponse {
 		Description: nt.Description,
 		TypeKey:     nt.TypeKey,
 		Category:    nt.Category,
+		Inputs:      nt.Inputs,
+		Outputs:     nt.Outputs,
 	}
 }
 

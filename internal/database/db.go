@@ -173,7 +173,8 @@ func (db *Database) RunMigrations(ctx context.Context) error {
 					description TEXT,
 					type_key VARCHAR(100) NOT NULL UNIQUE,
 					category VARCHAR(100) NOT NULL,
-					created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+					inputs JSONB NOT NULL DEFAULT '[]'::JSONB,
+					outputs JSONB NOT NULL DEFAULT '[]'::JSONB
 				);
 
 				-- Create indexes
@@ -181,11 +182,107 @@ func (db *Database) RunMigrations(ctx context.Context) error {
 				CREATE INDEX IF NOT EXISTS idx_node_templates_category ON node_templates(category);
 				
 				-- Insert default node templates
-				INSERT INTO node_templates (name, description, type_key, category) VALUES
-					('HTTP Request', 'Make HTTP requests to external APIs', 'http_request', 'integration'),
-					('Shell Command', 'Execute shell commands', 'shell_command', 'utility'),
-					('Condition', 'Conditional branching based on data', 'condition', 'control'),
-					('Loop', 'Iterate over data collections', 'loop', 'control')
+				INSERT INTO node_templates (name, description, type_key, category, inputs, outputs) VALUES
+					('HTTP Request', 'Make HTTP requests to external APIs', 'http_request', 'integration', '[
+						{"id": "input", "label": "Run"}
+					]'::JSONB, '[
+						{"id": "output_success", "label": "Successful Response"},
+						{"id": "output_error", "label": "Failed Response"}
+					]'::JSONB),
+					('Shell Command', 'Execute shell commands', 'shell_command', 'utility', '[
+						{"id": "input", "label": "Run"}
+					]'::JSONB, '[
+						{"id": "output_success", "label": "Success"},
+						{"id": "output_error", "label": "Error"}
+					]'::JSONB),
+					('Condition', 'Conditional branching based on data', 'condition', 'control', '[
+						{"id": "input", "label": "Input"}
+					]'::JSONB, '[
+						{"id": "output_true", "label": "True"},
+						{"id": "output_false", "label": "False"}
+					]'::JSONB),
+					('Loop', 'Iterate over data collections', 'loop', 'control', '[
+						{"id": "input", "label": "Start"}
+					]'::JSONB, '[
+						{"id": "output_item", "label": "For Each Item"},
+						{"id": "output_done", "label": "Done"}
+					]'::JSONB),
+					('Webhook', 'Trigger workflow with a http request (Manual)', 'webhook', 'trigger', '[]'::JSONB, '[
+						{"id": "output", "label": "On Request"}
+					]'::JSONB),
+					('Schedule (Cron)', 'Trigger workflow at specific intervals (e.g., every day at 09:00)', 'cron', 'trigger', '[]'::JSONB, '[
+						{"id": "output", "label": "On Schedule"}
+					]'::JSONB),
+					('Wait / Delay', 'Pause the workflow for a specified duration.', 'wait', 'control', '[
+						{"id": "input", "label": "Start Wait"}
+					]'::JSONB, '[
+						{"id": "output", "label": "Continue"}
+					]'::JSONB),
+					('Merge', 'Combine two or more separate (branch) workflows into a single path.', 'merge', 'control', '[
+						{"id": "input_1", "label": "Branch 1"},
+						{"id": "input_2", "label": "Branch 2"},
+						{"id": "input_3", "label": "Branch 3"}
+					]'::JSONB, '[
+						{"id": "output", "label": "Merged"}
+					]'::JSONB),
+					('Set Data', 'Manually set or transform existing data.', 'set_data', 'utility', '[
+						{"id": "input", "label": "Input"}
+					]'::JSONB, '[
+						{"id": "output", "label": "Output"}
+					]'::JSONB),
+					('Custom Code (JS)', 'Run short JavaScript code snippets. (The most powerful node!)', 'code_js', 'utility', '[
+						{"id": "input", "label": "Input"}
+					]'::JSONB, '[
+						{"id": "output_success", "label": "Success"},
+						{"id": "output_error", "label": "Error"}
+					]'::JSONB),
+					('Log Message', 'Write a custom message or data to the workflow logs.', 'log', 'utility', '[
+						{"id": "input", "label": "Input"}
+					]'::JSONB, '[
+						{"id": "output", "label": "Continue"}
+					]'::JSONB),
+					('Read File', 'Read a file from the server (text, json, binary).', 'file_read', 'utility', '[
+						{"id": "input", "label": "Read"}
+					]'::JSONB, '[
+						{"id": "output_success", "label": "Success"},
+						{"id": "output_error", "label": "Error"}
+					]'::JSONB),
+					('Write File', 'Write a file to the server (text, json, binary).', 'file_write', 'utility', '[
+						{"id": "input", "label": "Write"}
+					]'::JSONB, '[
+						{"id": "output_success", "label": "Success"},
+						{"id": "output_error", "label": "Error"}
+					]'::JSONB),
+					('PostgreSQL', 'Run a query on a PostgreSQL database.', 'db_postgres', 'integration', '[
+						{"id": "input", "label": "Execute"}
+					]'::JSONB, '[
+						{"id": "output_success", "label": "Success"},
+						{"id": "output_error", "label": "Error"}
+					]'::JSONB),
+					('MySQL / MariaDB', 'Run a query on a MySQL/MariaDB database.', 'db_mysql', 'integration', '[
+						{"id": "input", "label": "Execute"}
+					]'::JSONB, '[
+						{"id": "output_success", "label": "Success"},
+						{"id": "output_error", "label": "Error"}
+					]'::JSONB),
+					('Send Email (SMTP)', 'Send an email via SMTP server.', 'email_smtp', 'integration', '[
+						{"id": "input", "label": "Send"}
+					]'::JSONB, '[
+						{"id": "output_success", "label": "Sent"},
+						{"id": "output_error", "label": "Failed"}
+					]'::JSONB),
+					('Slack Message', 'Send a message to a Slack channel or user.', 'slack', 'integration', '[
+						{"id": "input", "label": "Send"}
+					]'::JSONB, '[
+						{"id": "output_success", "label": "Sent"},
+						{"id": "output_error", "label": "Failed"}
+					]'::JSONB),
+					('RabbitMQ Publish', 'Publish a message to a RabbitMQ queue.', 'mq_rabbitmq_publish', 'integration', '[
+						{"id": "input", "label": "Publish"}
+					]'::JSONB, '[
+						{"id": "output_success", "label": "Published"},
+						{"id": "output_error", "label": "Failed"}
+					]'::JSONB)
 				ON CONFLICT (type_key) DO NOTHING;
 			`,
 		},
