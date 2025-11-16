@@ -150,8 +150,14 @@ definitions:
         type: string
       id:
         type: string
+      inputs:
+        additionalProperties: true
+        type: object
       name:
         type: string
+      outputs:
+        additionalProperties: true
+        type: object
       type_key:
         type: string
     type: object

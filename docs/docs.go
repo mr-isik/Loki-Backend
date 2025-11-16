@@ -2573,8 +2573,16 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
+                "inputs": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
                 "name": {
                     "type": "string"
+                },
+                "outputs": {
+                    "type": "object",
+                    "additionalProperties": true
                 },
                 "type_key": {
                     "type": "string"
