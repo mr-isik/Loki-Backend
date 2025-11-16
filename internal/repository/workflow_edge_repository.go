@@ -24,8 +24,8 @@ func (r *WorkflowEdgeRepository) Create(ctx context.Context, edge *domain.Create
 		)
 		SELECT 
 			$1, $2, $3, $4, $5, $6
-		FROM workflow_nodes wn
-		WHERE wn.id = $1
+		FROM workflows wf
+		WHERE wf.id = $2
 	`
 
 	id := uuid.New()
@@ -54,7 +54,6 @@ func (r *WorkflowEdgeRepository) Create(ctx context.Context, edge *domain.Create
 }
 
 func (r *WorkflowEdgeRepository) Update(ctx context.Context, id uuid.UUID, edge *domain.UpdateWorkflowEdgeRequest) (*domain.WorkflowEdge, error) {
-	// Check if UUIDs are zero (not provided)
 	var sourceNodeID *uuid.UUID
 	if edge.SourceNodeID != uuid.Nil {
 		sourceNodeID = &edge.SourceNodeID
