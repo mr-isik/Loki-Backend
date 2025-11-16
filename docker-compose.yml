@@ -2,7 +2,7 @@ services:
   # PostgreSQL Database
   postgres:
     image: postgres:16-alpine
-    container_name: loki-postgres
+    container_name: loki-db
     restart: unless-stopped
     environment:
       POSTGRES_USER: "${DB_USER}"
