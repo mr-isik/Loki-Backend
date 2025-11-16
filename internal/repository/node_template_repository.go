@@ -20,11 +20,11 @@ func NewNodeTemplateRepository(db *pgxpool.Pool) domain.NodeTemplateRepository {
 
 func (r *nodeTemplateRepository) GetAll(ctx context.Context) ([]*domain.NodeTemplate, error) {
 	query := `
-		SELECT id, name, description, type_key, category
+		SELECT id, name, description, type_key, category, inputs, outputs
 		FROM node_templates
 		ORDER BY category, name
 	`
-	
+
 	rows, err := r.db.Query(ctx, query)
 	if err != nil {
 		return nil, domain.ParseDBError(err)
@@ -40,6 +40,8 @@ func (r *nodeTemplateRepository) GetAll(ctx context.Context) ([]*domain.NodeTemp
 			&template.Description,
 			&template.TypeKey,
 			&template.Category,
+			&template.Inputs,
+			&template.Outputs,
 		); err != nil {
 			return nil, domain.ParseDBError(err)
 		}
@@ -55,7 +57,7 @@ func (r *nodeTemplateRepository) GetAll(ctx context.Context) ([]*domain.NodeTemp
 
 func (r *nodeTemplateRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.NodeTemplate, error) {
 	query := `
-		SELECT id, name, description, type_key, category
+		SELECT id, name, description, type_key, category, inputs, outputs
 		FROM node_templates
 		WHERE id = $1
 	`
@@ -67,6 +69,8 @@ func (r *nodeTemplateRepository) GetByID(ctx context.Context, id uuid.UUID) (*do
 		&template.Description,
 		&template.TypeKey,
 		&template.Category,
+		&template.Inputs,
+		&template.Outputs,
 	)
 
 	if err != nil {
@@ -75,4 +79,3 @@ func (r *nodeTemplateRepository) GetByID(ctx context.Context, id uuid.UUID) (*do
 
 	return &template, nil
 }
-
