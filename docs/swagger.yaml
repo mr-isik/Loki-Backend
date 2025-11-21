@@ -151,13 +151,17 @@ definitions:
       id:
         type: string
       inputs:
-        additionalProperties: true
-        type: object
+        items:
+          additionalProperties: true
+          type: object
+        type: array
       name:
         type: string
       outputs:
-        additionalProperties: true
-        type: object
+        items:
+          additionalProperties: true
+          type: object
+        type: array
       type_key:
         type: string
     type: object

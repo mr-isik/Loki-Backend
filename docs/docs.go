@@ -2574,15 +2574,21 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "inputs": {
-                    "type": "object",
-                    "additionalProperties": true
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "additionalProperties": true
+                    }
                 },
                 "name": {
                     "type": "string"
                 },
                 "outputs": {
-                    "type": "object",
-                    "additionalProperties": true
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "additionalProperties": true
+                    }
                 },
                 "type_key": {
                     "type": "string"

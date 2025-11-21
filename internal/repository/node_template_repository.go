@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -34,17 +35,32 @@ func (r *nodeTemplateRepository) GetAll(ctx context.Context) ([]*domain.NodeTemp
 	var templates []*domain.NodeTemplate
 	for rows.Next() {
 		var template domain.NodeTemplate
+		var inputsJSON, outputsJSON []byte
+		
 		if err := rows.Scan(
 			&template.ID,
 			&template.Name,
 			&template.Description,
 			&template.TypeKey,
 			&template.Category,
-			&template.Inputs,
-			&template.Outputs,
+			&inputsJSON,
+			&outputsJSON,
 		); err != nil {
 			return nil, domain.ParseDBError(err)
 		}
+
+		// Unmarshal JSONB fields
+		if len(inputsJSON) > 0 {
+			if err := json.Unmarshal(inputsJSON, &template.Inputs); err != nil {
+				return nil, err
+			}
+		}
+		if len(outputsJSON) > 0 {
+			if err := json.Unmarshal(outputsJSON, &template.Outputs); err != nil {
+				return nil, err
+			}
+		}
+
 		templates = append(templates, &template)
 	}
 
@@ -63,18 +79,32 @@ func (r *nodeTemplateRepository) GetByID(ctx context.Context, id uuid.UUID) (*do
 	`
 
 	var template domain.NodeTemplate
+	var inputsJSON, outputsJSON []byte
+	
 	err := r.db.QueryRow(ctx, query, id).Scan(
 		&template.ID,
 		&template.Name,
 		&template.Description,
 		&template.TypeKey,
 		&template.Category,
-		&template.Inputs,
-		&template.Outputs,
+		&inputsJSON,
+		&outputsJSON,
 	)
 
 	if err != nil {
 		return nil, domain.ParseDBError(err)
+	}
+
+	// Unmarshal JSONB fields
+	if len(inputsJSON) > 0 {
+		if err := json.Unmarshal(inputsJSON, &template.Inputs); err != nil {
+			return nil, err
+		}
+	}
+	if len(outputsJSON) > 0 {
+		if err := json.Unmarshal(outputsJSON, &template.Outputs); err != nil {
+			return nil, err
+		}
 	}
 
 	return &template, nil
