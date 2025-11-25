@@ -19,10 +19,10 @@ type rabbitmqData struct {
 	Message    string `json:"message"`
 }
 
-func (n *MqRabbitmqPublishNode) Execute(ctx context.Context, rawData []byte) (domain.NodeResult, error) {
+func (n *MqRabbitmqPublishNode) Execute(ctx context.Context, rawData []byte) (*domain.NodeResult, error) {
 	var data rabbitmqData
 	if err := json.Unmarshal(rawData, &data); err != nil {
-		return domain.NodeResult{
+		return &domain.NodeResult{
 			Status:     "failed",
 			Log:        fmt.Sprintf("Failed to parse input: %v", err),
 			OutputData: map[string]interface{}{"error": err.Error()},
@@ -33,7 +33,7 @@ func (n *MqRabbitmqPublishNode) Execute(ctx context.Context, rawData []byte) (do
 	// conn, err := amqp091.Dial(data.URL)
 	// ...
 
-	return domain.NodeResult{
+	return &domain.NodeResult{
 		Status:          "completed",
 		TriggeredHandle: "output_success",
 		Log:             "RabbitMQ publish simulated (dependency missing)",

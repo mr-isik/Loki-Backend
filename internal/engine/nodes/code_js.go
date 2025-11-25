@@ -16,10 +16,10 @@ type codeJsData struct {
 	Input map[string]interface{} `json:"input"`
 }
 
-func (n *CodeJsNode) Execute(ctx context.Context, rawData []byte) (domain.NodeResult, error) {
+func (n *CodeJsNode) Execute(ctx context.Context, rawData []byte) (*domain.NodeResult, error) {
 	var data codeJsData
 	if err := json.Unmarshal(rawData, &data); err != nil {
-		return domain.NodeResult{
+		return &domain.NodeResult{
 			Status:     "failed",
 			Log:        fmt.Sprintf("Failed to parse input: %v", err),
 			OutputData: map[string]interface{}{"error": err.Error()},
@@ -47,7 +47,7 @@ func (n *CodeJsNode) Execute(ctx context.Context, rawData []byte) (domain.NodeRe
 	// Run the code
 	val, err := vm.RunString(data.Code)
 	if err != nil {
-		return domain.NodeResult{
+		return &domain.NodeResult{
 			Status:          "failed",
 			TriggeredHandle: "output_error",
 			Log:             fmt.Sprintf("JS Execution Error: %v\nLogs: %v", err, logs),
@@ -65,7 +65,7 @@ func (n *CodeJsNode) Execute(ctx context.Context, rawData []byte) (domain.NodeRe
 		outputMap = map[string]interface{}{"result": output}
 	}
 
-	return domain.NodeResult{
+	return &domain.NodeResult{
 		Status:          "completed",
 		TriggeredHandle: "output_success",
 		Log:             fmt.Sprintf("JS Execution Success. Logs: %v", logs),

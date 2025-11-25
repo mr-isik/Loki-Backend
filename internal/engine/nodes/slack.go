@@ -18,10 +18,10 @@ type slackData struct {
 	Channel    string `json:"channel"` // Optional, if webhook supports it
 }
 
-func (n *SlackNode) Execute(ctx context.Context, rawData []byte) (domain.NodeResult, error) {
+func (n *SlackNode) Execute(ctx context.Context, rawData []byte) (*domain.NodeResult, error) {
 	var data slackData
 	if err := json.Unmarshal(rawData, &data); err != nil {
-		return domain.NodeResult{
+		return &domain.NodeResult{
 			Status:     "failed",
 			Log:        fmt.Sprintf("Failed to parse input: %v", err),
 			OutputData: map[string]interface{}{"error": err.Error()},
@@ -29,7 +29,7 @@ func (n *SlackNode) Execute(ctx context.Context, rawData []byte) (domain.NodeRes
 	}
 
 	if data.WebhookURL == "" {
-		return domain.NodeResult{
+		return &domain.NodeResult{
 			Status:     "failed",
 			Log:        "Webhook URL is required",
 			OutputData: map[string]interface{}{"error": "Webhook URL is required"},
@@ -46,7 +46,7 @@ func (n *SlackNode) Execute(ctx context.Context, rawData []byte) (domain.NodeRes
 	payloadBytes, _ := json.Marshal(payload)
 	req, err := http.NewRequestWithContext(ctx, "POST", data.WebhookURL, bytes.NewBuffer(payloadBytes))
 	if err != nil {
-		return domain.NodeResult{
+		return &domain.NodeResult{
 			Status:     "failed",
 			Log:        fmt.Sprintf("Failed to create request: %v", err),
 			OutputData: map[string]interface{}{"error": err.Error()},
@@ -57,7 +57,7 @@ func (n *SlackNode) Execute(ctx context.Context, rawData []byte) (domain.NodeRes
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return domain.NodeResult{
+		return &domain.NodeResult{
 			Status:          "failed",
 			TriggeredHandle: "output_error",
 			Log:             fmt.Sprintf("Failed to send Slack message: %v", err),
@@ -67,7 +67,7 @@ func (n *SlackNode) Execute(ctx context.Context, rawData []byte) (domain.NodeRes
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 400 {
-		return domain.NodeResult{
+		return &domain.NodeResult{
 			Status:          "failed",
 			TriggeredHandle: "output_error",
 			Log:             fmt.Sprintf("Slack API returned status: %d", resp.StatusCode),
@@ -75,7 +75,7 @@ func (n *SlackNode) Execute(ctx context.Context, rawData []byte) (domain.NodeRes
 		}, nil
 	}
 
-	return domain.NodeResult{
+	return &domain.NodeResult{
 		Status:          "completed",
 		TriggeredHandle: "output_success",
 		Log:             "Slack message sent",

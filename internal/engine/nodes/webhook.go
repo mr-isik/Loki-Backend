@@ -8,7 +8,7 @@ import (
 
 type WebhookNode struct{}
 
-func (n *WebhookNode) Execute(ctx context.Context, rawData []byte) (domain.NodeResult, error) {
+func (n *WebhookNode) Execute(ctx context.Context, rawData []byte) (*domain.NodeResult, error) {
 	// WebhookNode is usually a trigger. When executed (e.g. manually or by the system passing initial data),
 	// it just passes the data through.
 
@@ -21,7 +21,7 @@ func (n *WebhookNode) Execute(ctx context.Context, rawData []byte) (domain.NodeR
 
 	// Let's try to unmarshal to map[string]interface{} to be nicer, but fallback to string.
 
-	return domain.NodeResult{
+	return &domain.NodeResult{
 		Status:          "completed",
 		TriggeredHandle: "output",
 		Log:             "Webhook triggered",

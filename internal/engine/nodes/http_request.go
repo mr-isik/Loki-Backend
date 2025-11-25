@@ -20,10 +20,10 @@ type httpData struct {
 	Body    interface{}       `json:"body"`
 }
 
-func (n *HttpRequestNode) Execute(ctx context.Context, rawData []byte) (domain.NodeResult, error) {
+func (n *HttpRequestNode) Execute(ctx context.Context, rawData []byte) (*domain.NodeResult, error) {
 	var data httpData
 	if err := json.Unmarshal(rawData, &data); err != nil {
-		return domain.NodeResult{
+		return &domain.NodeResult{
 			Status:     "failed",
 			Log:        fmt.Sprintf("Failed to parse input: %v", err),
 			OutputData: map[string]interface{}{"error": err.Error()},
@@ -31,7 +31,7 @@ func (n *HttpRequestNode) Execute(ctx context.Context, rawData []byte) (domain.N
 	}
 
 	if data.URL == "" {
-		return domain.NodeResult{
+		return &domain.NodeResult{
 			Status:     "failed",
 			Log:        "URL is required",
 			OutputData: map[string]interface{}{"error": "URL is required"},
@@ -42,7 +42,7 @@ func (n *HttpRequestNode) Execute(ctx context.Context, rawData []byte) (domain.N
 	if data.Body != nil {
 		jsonBody, err := json.Marshal(data.Body)
 		if err != nil {
-			return domain.NodeResult{
+			return &domain.NodeResult{
 				Status:     "failed",
 				Log:        fmt.Sprintf("Failed to marshal body: %v", err),
 				OutputData: map[string]interface{}{"error": err.Error()},
@@ -53,7 +53,7 @@ func (n *HttpRequestNode) Execute(ctx context.Context, rawData []byte) (domain.N
 
 	req, err := http.NewRequestWithContext(ctx, data.Method, data.URL, bodyReader)
 	if err != nil {
-		return domain.NodeResult{
+		return &domain.NodeResult{
 			Status:     "failed",
 			Log:        fmt.Sprintf("Failed to create request: %v", err),
 			OutputData: map[string]interface{}{"error": err.Error()},
@@ -73,12 +73,12 @@ func (n *HttpRequestNode) Execute(ctx context.Context, rawData []byte) (domain.N
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return domain.NodeResult{
+		return &domain.NodeResult{
 			Status:          "failed",
 			TriggeredHandle: "output_error",
 			Log:             fmt.Sprintf("Request failed: %v", err),
 			OutputData:      map[string]interface{}{"error": err.Error()},
-		}, nil // Return nil error to allow workflow to continue on error path if needed
+		}, nil
 	}
 	defer resp.Body.Close()
 
@@ -90,7 +90,7 @@ func (n *HttpRequestNode) Execute(ctx context.Context, rawData []byte) (domain.N
 		responseBody = string(body)
 	}
 
-	return domain.NodeResult{
+	return &domain.NodeResult{
 		Status:          "completed",
 		TriggeredHandle: "output_success",
 		Log:             fmt.Sprintf("Request to %s completed with status %d", data.URL, resp.StatusCode),

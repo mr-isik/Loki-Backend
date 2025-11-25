@@ -21,10 +21,10 @@ type dbPostgresData struct {
 	Query    string `json:"query"`
 }
 
-func (n *DbPostgresNode) Execute(ctx context.Context, rawData []byte) (domain.NodeResult, error) {
+func (n *DbPostgresNode) Execute(ctx context.Context, rawData []byte) (*domain.NodeResult, error) {
 	var data dbPostgresData
 	if err := json.Unmarshal(rawData, &data); err != nil {
-		return domain.NodeResult{
+		return &domain.NodeResult{
 			Status:     "failed",
 			Log:        fmt.Sprintf("Failed to parse input: %v", err),
 			OutputData: map[string]interface{}{"error": err.Error()},
@@ -36,7 +36,7 @@ func (n *DbPostgresNode) Execute(ctx context.Context, rawData []byte) (domain.No
 
 	db, err := sql.Open("pgx", connStr)
 	if err != nil {
-		return domain.NodeResult{
+		return &domain.NodeResult{
 			Status:     "failed",
 			Log:        fmt.Sprintf("Failed to connect to database: %v", err),
 			OutputData: map[string]interface{}{"error": err.Error()},
@@ -50,7 +50,7 @@ func (n *DbPostgresNode) Execute(ctx context.Context, rawData []byte) (domain.No
 
 	rows, err := db.QueryContext(ctx, data.Query)
 	if err != nil {
-		return domain.NodeResult{
+		return &domain.NodeResult{
 			Status:          "failed",
 			TriggeredHandle: "output_error",
 			Log:             fmt.Sprintf("Query failed: %v", err),
@@ -91,7 +91,7 @@ func (n *DbPostgresNode) Execute(ctx context.Context, rawData []byte) (domain.No
 		results = append(results, m)
 	}
 
-	return domain.NodeResult{
+	return &domain.NodeResult{
 		Status:          "completed",
 		TriggeredHandle: "output_success",
 		Log:             fmt.Sprintf("Query executed successfully. Rows returned: %d", len(results)),

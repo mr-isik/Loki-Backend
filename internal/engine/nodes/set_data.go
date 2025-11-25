@@ -14,22 +14,22 @@ type setDataData struct {
 	Data map[string]interface{} `json:"data"`
 }
 
-func (n *SetDataNode) Execute(ctx context.Context, rawData []byte) (domain.NodeResult, error) {
+func (n *SetDataNode) Execute(ctx context.Context, rawData []byte) (*domain.NodeResult, error) {
 	var data setDataData
 	if err := json.Unmarshal(rawData, &data); err != nil {
 		// If it's not the expected structure, maybe the rawData IS the data?
 		// But let's stick to the structure: {"data": {...}}
-		return domain.NodeResult{
+		return &domain.NodeResult{
 			Status:     "failed",
 			Log:        fmt.Sprintf("Failed to parse input: %v", err),
 			OutputData: map[string]interface{}{"error": err.Error()},
 		}, err
 	}
 
-	return domain.NodeResult{
+	return &domain.NodeResult{
 		Status:          "completed",
 		TriggeredHandle: "output",
-		Log:             "Data set",
+		Log:             fmt.Sprintf("Set %d data keys", len(data.Data)),
 		OutputData:      data.Data,
 	}, nil
 }

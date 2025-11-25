@@ -9,10 +9,10 @@ import (
 
 type CronNode struct{}
 
-func (n *CronNode) Execute(ctx context.Context, rawData []byte) (domain.NodeResult, error) {
+func (n *CronNode) Execute(ctx context.Context, rawData []byte) (*domain.NodeResult, error) {
 	// CronNode is a trigger. It usually passes the current time.
 
-	return domain.NodeResult{
+	return &domain.NodeResult{
 		Status:          "completed",
 		TriggeredHandle: "output",
 		Log:             "Cron triggered",

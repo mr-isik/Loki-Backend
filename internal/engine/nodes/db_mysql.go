@@ -21,10 +21,10 @@ type dbMysqlData struct {
 	Query    string `json:"query"`
 }
 
-func (n *DbMysqlNode) Execute(ctx context.Context, rawData []byte) (domain.NodeResult, error) {
+func (n *DbMysqlNode) Execute(ctx context.Context, rawData []byte) (*domain.NodeResult, error) {
 	var data dbMysqlData
 	if err := json.Unmarshal(rawData, &data); err != nil {
-		return domain.NodeResult{
+		return &domain.NodeResult{
 			Status:     "failed",
 			Log:        fmt.Sprintf("Failed to parse input: %v", err),
 			OutputData: map[string]interface{}{"error": err.Error()},
@@ -43,7 +43,7 @@ func (n *DbMysqlNode) Execute(ctx context.Context, rawData []byte) (domain.NodeR
 
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
-		return domain.NodeResult{
+		return &domain.NodeResult{
 			Status:     "failed",
 			Log:        fmt.Sprintf("Failed to connect to database: %v", err),
 			OutputData: map[string]interface{}{"error": err.Error()},
@@ -53,7 +53,7 @@ func (n *DbMysqlNode) Execute(ctx context.Context, rawData []byte) (domain.NodeR
 
 	rows, err := db.QueryContext(ctx, data.Query)
 	if err != nil {
-		return domain.NodeResult{
+		return &domain.NodeResult{
 			Status:          "failed",
 			TriggeredHandle: "output_error",
 			Log:             fmt.Sprintf("Query failed: %v", err),
@@ -89,7 +89,7 @@ func (n *DbMysqlNode) Execute(ctx context.Context, rawData []byte) (domain.NodeR
 		results = append(results, m)
 	}
 
-	return domain.NodeResult{
+	return &domain.NodeResult{
 		Status:          "completed",
 		TriggeredHandle: "output_success",
 		Log:             fmt.Sprintf("Query executed successfully. Rows returned: %d", len(results)),

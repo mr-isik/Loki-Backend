@@ -18,10 +18,10 @@ type shellData struct {
 	Dir     string   `json:"dir"`
 }
 
-func (n *ShellCommandNode) Execute(ctx context.Context, rawData []byte) (domain.NodeResult, error) {
+func (n *ShellCommandNode) Execute(ctx context.Context, rawData []byte) (*domain.NodeResult, error) {
 	var data shellData
 	if err := json.Unmarshal(rawData, &data); err != nil {
-		return domain.NodeResult{
+		return &domain.NodeResult{
 			Status:     "failed",
 			Log:        fmt.Sprintf("Failed to parse input: %v", err),
 			OutputData: map[string]interface{}{"error": err.Error()},
@@ -29,7 +29,7 @@ func (n *ShellCommandNode) Execute(ctx context.Context, rawData []byte) (domain.
 	}
 
 	if data.Command == "" {
-		return domain.NodeResult{
+		return &domain.NodeResult{
 			Status:     "failed",
 			Log:        "Command is required",
 			OutputData: map[string]interface{}{"error": "Command is required"},
@@ -45,7 +45,7 @@ func (n *ShellCommandNode) Execute(ctx context.Context, rawData []byte) (domain.
 	outputStr := string(output)
 
 	if err != nil {
-		return domain.NodeResult{
+		return &domain.NodeResult{
 			Status:          "failed",
 			TriggeredHandle: "output_error",
 			Log:             fmt.Sprintf("Command failed: %v\nOutput: %s", err, outputStr),
@@ -56,7 +56,7 @@ func (n *ShellCommandNode) Execute(ctx context.Context, rawData []byte) (domain.
 		}, nil
 	}
 
-	return domain.NodeResult{
+	return &domain.NodeResult{
 		Status:          "completed",
 		TriggeredHandle: "output_success",
 		Log:             fmt.Sprintf("Command executed successfully. Output length: %d", len(outputStr)),

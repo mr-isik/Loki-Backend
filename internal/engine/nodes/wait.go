@@ -16,10 +16,10 @@ type waitData struct {
 	Unit     string `json:"unit"`     // "ms", "s", "m", "h"
 }
 
-func (n *WaitNode) Execute(ctx context.Context, rawData []byte) (domain.NodeResult, error) {
+func (n *WaitNode) Execute(ctx context.Context, rawData []byte) (*domain.NodeResult, error) {
 	var data waitData
 	if err := json.Unmarshal(rawData, &data); err != nil {
-		return domain.NodeResult{
+		return &domain.NodeResult{
 			Status:     "failed",
 			Log:        fmt.Sprintf("Failed to parse input: %v", err),
 			OutputData: map[string]interface{}{"error": err.Error()},
@@ -38,14 +38,14 @@ func (n *WaitNode) Execute(ctx context.Context, rawData []byte) (domain.NodeResu
 
 	select {
 	case <-time.After(duration):
-		return domain.NodeResult{
+		return &domain.NodeResult{
 			Status:          "completed",
 			TriggeredHandle: "output",
 			Log:             fmt.Sprintf("Waited for %v", duration),
 			OutputData:      map[string]interface{}{"waited": true},
 		}, nil
 	case <-ctx.Done():
-		return domain.NodeResult{
+		return &domain.NodeResult{
 			Status:     "cancelled",
 			Log:        "Wait cancelled",
 			OutputData: map[string]interface{}{"error": "cancelled"},

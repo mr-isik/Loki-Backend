@@ -16,10 +16,10 @@ type conditionData struct {
 	Value2   interface{} `json:"value2"`
 }
 
-func (n *ConditionNode) Execute(ctx context.Context, rawData []byte) (domain.NodeResult, error) {
+func (n *ConditionNode) Execute(ctx context.Context, rawData []byte) (*domain.NodeResult, error) {
 	var data conditionData
 	if err := json.Unmarshal(rawData, &data); err != nil {
-		return domain.NodeResult{
+		return &domain.NodeResult{
 			Status:     "failed",
 			Log:        fmt.Sprintf("Failed to parse input: %v", err),
 			OutputData: map[string]interface{}{"error": err.Error()},
@@ -41,7 +41,7 @@ func (n *ConditionNode) Execute(ctx context.Context, rawData []byte) (domain.Nod
 	case "<=":
 		result = compare(data.Value1, data.Value2) <= 0
 	default:
-		return domain.NodeResult{
+		return &domain.NodeResult{
 			Status:     "failed",
 			Log:        fmt.Sprintf("Unknown operator: %s", data.Operator),
 			OutputData: map[string]interface{}{"error": "Unknown operator"},
@@ -53,7 +53,7 @@ func (n *ConditionNode) Execute(ctx context.Context, rawData []byte) (domain.Nod
 		triggeredHandle = "output_true"
 	}
 
-	return domain.NodeResult{
+	return &domain.NodeResult{
 		Status:          "completed",
 		TriggeredHandle: triggeredHandle,
 		Log:             fmt.Sprintf("Condition evaluated to %v", result),

@@ -23,10 +23,10 @@ type emailData struct {
 	Body     string   `json:"body"`
 }
 
-func (n *EmailSmtpNode) Execute(ctx context.Context, rawData []byte) (domain.NodeResult, error) {
+func (n *EmailSmtpNode) Execute(ctx context.Context, rawData []byte) (*domain.NodeResult, error) {
 	var data emailData
 	if err := json.Unmarshal(rawData, &data); err != nil {
-		return domain.NodeResult{
+		return &domain.NodeResult{
 			Status:     "failed",
 			Log:        fmt.Sprintf("Failed to parse input: %v", err),
 			OutputData: map[string]interface{}{"error": err.Error()},
@@ -43,7 +43,7 @@ func (n *EmailSmtpNode) Execute(ctx context.Context, rawData []byte) (domain.Nod
 
 	err := smtp.SendMail(addr, auth, data.From, data.To, msg)
 	if err != nil {
-		return domain.NodeResult{
+		return &domain.NodeResult{
 			Status:          "failed",
 			TriggeredHandle: "output_error",
 			Log:             fmt.Sprintf("Failed to send email: %v", err),
@@ -51,7 +51,7 @@ func (n *EmailSmtpNode) Execute(ctx context.Context, rawData []byte) (domain.Nod
 		}, nil
 	}
 
-	return domain.NodeResult{
+	return &domain.NodeResult{
 		Status:          "completed",
 		TriggeredHandle: "output_success",
 		Log:             fmt.Sprintf("Email sent to %v", data.To),

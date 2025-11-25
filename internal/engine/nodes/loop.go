@@ -14,10 +14,10 @@ type loopData struct {
 	Items interface{} `json:"items"`
 }
 
-func (n *LoopNode) Execute(ctx context.Context, rawData []byte) (domain.NodeResult, error) {
+func (n *LoopNode) Execute(ctx context.Context, rawData []byte) (*domain.NodeResult, error) {
 	var data loopData
 	if err := json.Unmarshal(rawData, &data); err != nil {
-		return domain.NodeResult{
+		return &domain.NodeResult{
 			Status:     "failed",
 			Log:        fmt.Sprintf("Failed to parse input: %v", err),
 			OutputData: map[string]interface{}{"error": err.Error()},
@@ -48,14 +48,14 @@ func (n *LoopNode) Execute(ctx context.Context, rawData []byte) (domain.NodeResu
 	// Let's normalize the input to a slice.
 	items, err := toSlice(data.Items)
 	if err != nil {
-		return domain.NodeResult{
+		return &domain.NodeResult{
 			Status:     "failed",
 			Log:        fmt.Sprintf("Failed to convert items to slice: %v", err),
 			OutputData: map[string]interface{}{"error": err.Error()},
 		}, err
 	}
 
-	return domain.NodeResult{
+	return &domain.NodeResult{
 		Status:          "completed",
 		TriggeredHandle: "output_item", // The engine should probably handle this special case
 		Log:             fmt.Sprintf("Looping over %d items", len(items)),

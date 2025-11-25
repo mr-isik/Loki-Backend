@@ -18,10 +18,10 @@ type fileWriteData struct {
 	Append  bool   `json:"append"`
 }
 
-func (n *FileWriteNode) Execute(ctx context.Context, rawData []byte) (domain.NodeResult, error) {
+func (n *FileWriteNode) Execute(ctx context.Context, rawData []byte) (*domain.NodeResult, error) {
 	var data fileWriteData
 	if err := json.Unmarshal(rawData, &data); err != nil {
-		return domain.NodeResult{
+		return &domain.NodeResult{
 			Status:     "failed",
 			Log:        fmt.Sprintf("Failed to parse input: %v", err),
 			OutputData: map[string]interface{}{"error": err.Error()},
@@ -29,7 +29,7 @@ func (n *FileWriteNode) Execute(ctx context.Context, rawData []byte) (domain.Nod
 	}
 
 	if data.Path == "" {
-		return domain.NodeResult{
+		return &domain.NodeResult{
 			Status:     "failed",
 			Log:        "Path is required",
 			OutputData: map[string]interface{}{"error": "Path is required"},
@@ -39,7 +39,7 @@ func (n *FileWriteNode) Execute(ctx context.Context, rawData []byte) (domain.Nod
 	// Ensure directory exists
 	dir := filepath.Dir(data.Path)
 	if err := os.MkdirAll(dir, 0755); err != nil {
-		return domain.NodeResult{
+		return &domain.NodeResult{
 			Status:          "failed",
 			TriggeredHandle: "output_error",
 			Log:             fmt.Sprintf("Failed to create directory: %v", err),
@@ -54,7 +54,7 @@ func (n *FileWriteNode) Execute(ctx context.Context, rawData []byte) (domain.Nod
 
 	file, err := os.OpenFile(data.Path, flags, 0644)
 	if err != nil {
-		return domain.NodeResult{
+		return &domain.NodeResult{
 			Status:          "failed",
 			TriggeredHandle: "output_error",
 			Log:             fmt.Sprintf("Failed to open file: %v", err),
@@ -65,7 +65,7 @@ func (n *FileWriteNode) Execute(ctx context.Context, rawData []byte) (domain.Nod
 
 	nBytes, err := file.WriteString(data.Content)
 	if err != nil {
-		return domain.NodeResult{
+		return &domain.NodeResult{
 			Status:          "failed",
 			TriggeredHandle: "output_error",
 			Log:             fmt.Sprintf("Failed to write to file: %v", err),
@@ -73,7 +73,7 @@ func (n *FileWriteNode) Execute(ctx context.Context, rawData []byte) (domain.Nod
 		}, nil
 	}
 
-	return domain.NodeResult{
+	return &domain.NodeResult{
 		Status:          "completed",
 		TriggeredHandle: "output_success",
 		Log:             fmt.Sprintf("Wrote %d bytes to %s", nBytes, data.Path),

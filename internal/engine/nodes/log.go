@@ -16,10 +16,10 @@ type logData struct {
 	Level   string `json:"level"` // info, warn, error
 }
 
-func (n *LogNode) Execute(ctx context.Context, rawData []byte) (domain.NodeResult, error) {
+func (n *LogNode) Execute(ctx context.Context, rawData []byte) (*domain.NodeResult, error) {
 	var data logData
 	if err := json.Unmarshal(rawData, &data); err != nil {
-		return domain.NodeResult{
+		return &domain.NodeResult{
 			Status:     "failed",
 			Log:        fmt.Sprintf("Failed to parse input: %v", err),
 			OutputData: map[string]interface{}{"error": err.Error()},
@@ -31,7 +31,7 @@ func (n *LogNode) Execute(ctx context.Context, rawData []byte) (domain.NodeResul
 	logMsg := fmt.Sprintf("[%s] %s", data.Level, data.Message)
 	log.Println(logMsg)
 
-	return domain.NodeResult{
+	return &domain.NodeResult{
 		Status:          "completed",
 		TriggeredHandle: "output",
 		Log:             logMsg,
