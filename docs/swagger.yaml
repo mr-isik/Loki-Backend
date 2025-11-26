@@ -1522,6 +1522,43 @@ paths:
       summary: Publish workflow
       tags:
       - Workflows
+  /workflows/{id}/run:
+    post:
+      description: Execute a workflow immediately
+      parameters:
+      - description: Workflow ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.WorkflowRunResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Run workflow
+      tags:
+      - Workflows
   /workflows/{workflow_id}/edges:
     get:
       description: Retrieve all edges (connections) in a workflow

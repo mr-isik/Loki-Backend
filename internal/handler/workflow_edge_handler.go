@@ -60,7 +60,7 @@ func (h *WorkflowEdgeHandler) CreateWorkflowEdge(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.JSON(edge.ToResponse())
+	return c.JSON(edge)
 }
 
 // GetWorkflowEdge handles retrieving a workflow edge by ID
@@ -86,7 +86,7 @@ func (h *WorkflowEdgeHandler) GetWorkflowEdge(c *fiber.Ctx) error {
 		})
 	}
 
-	edge, err := h.service.GetWorkflowEdge(c.Context(), id)
+	edge, err := h.service.GetWorkflowEdgeByID(c.Context(), id)
 	if err != nil {
 		if errors.Is(err, domain.ErrWorkflowEdgeNotFound) {
 			return c.Status(fiber.StatusNotFound).JSON(ErrorResponse{
@@ -100,7 +100,7 @@ func (h *WorkflowEdgeHandler) GetWorkflowEdge(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.JSON(edge.ToResponse())
+	return c.JSON(edge)
 }
 
 // GetWorkflowEdgesByWorkflow handles retrieving all edges for a workflow
@@ -125,7 +125,7 @@ func (h *WorkflowEdgeHandler) GetWorkflowEdgesByWorkflow(c *fiber.Ctx) error {
 		})
 	}
 
-	edges, err := h.service.GetWorkflowEdgesByWorkflow(c.Context(), workflowID)
+	edges, err := h.service.GetWorkflowEdgesByWorkflowID(c.Context(), workflowID)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{
 			Error:   "internal_error",
@@ -133,14 +133,9 @@ func (h *WorkflowEdgeHandler) GetWorkflowEdgesByWorkflow(c *fiber.Ctx) error {
 		})
 	}
 
-	response := make([]*domain.WorkflowEdgeResponse, len(edges))
-	for i, edge := range edges {
-		response[i] = edge.ToResponse()
-	}
-
 	return c.JSON(fiber.Map{
-		"edges": response,
-		"count": len(response),
+		"edges": edges,
+		"count": len(edges),
 	})
 }
 
@@ -203,7 +198,7 @@ func (h *WorkflowEdgeHandler) UpdateWorkflowEdge(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.JSON(edge.ToResponse())
+	return c.JSON(edge)
 }
 
 // DeleteWorkflowEdge handles deleting a workflow edge

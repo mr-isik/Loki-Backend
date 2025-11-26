@@ -16,20 +16,40 @@ func NewWorkflowEdgeService(repo domain.WorkflowEdgeRepository) *WorkflowEdgeSer
 	return &WorkflowEdgeService{repo: repo}
 }
 
-func (s *WorkflowEdgeService) CreateWorkflowEdge(ctx context.Context, req *domain.CreateWorkflowEdgeRequest) (*domain.WorkflowEdge, error) {
-	return s.repo.Create(ctx, req)
+func (s *WorkflowEdgeService) CreateWorkflowEdge(ctx context.Context, req *domain.CreateWorkflowEdgeRequest) (*domain.WorkflowEdgeResponse, error) {
+	edge, err := s.repo.Create(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return edge.ToResponse(), nil
 }
 
-func (s *WorkflowEdgeService) UpdateWorkflowEdge(ctx context.Context, id uuid.UUID, req *domain.UpdateWorkflowEdgeRequest) (*domain.WorkflowEdge, error) {
-	return s.repo.Update(ctx, id, req)
+func (s *WorkflowEdgeService) UpdateWorkflowEdge(ctx context.Context, id uuid.UUID, req *domain.UpdateWorkflowEdgeRequest) (*domain.WorkflowEdgeResponse, error) {
+	edge, err := s.repo.Update(ctx, id, req)
+	if err != nil {
+		return nil, err
+	}
+	return edge.ToResponse(), nil
 }
 
-func (s *WorkflowEdgeService) GetWorkflowEdge(ctx context.Context, id uuid.UUID) (*domain.WorkflowEdge, error) {
-	return s.repo.GetByID(ctx, id)
+func (s *WorkflowEdgeService) GetWorkflowEdgeByID(ctx context.Context, id uuid.UUID) (*domain.WorkflowEdgeResponse, error) {
+	edge, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return edge.ToResponse(), nil
 }
 
-func (s *WorkflowEdgeService) GetWorkflowEdgesByWorkflow(ctx context.Context, workflowID uuid.UUID) ([]*domain.WorkflowEdge, error) {
-	return s.repo.GetByWorkflowID(ctx, workflowID)
+func (s *WorkflowEdgeService) GetWorkflowEdgesByWorkflowID(ctx context.Context, workflowID uuid.UUID) ([]*domain.WorkflowEdgeResponse, error) {
+	edges, err := s.repo.GetByWorkflowID(ctx, workflowID)
+	if err != nil {
+		return nil, err
+	}
+	var responses []*domain.WorkflowEdgeResponse
+	for _, edge := range edges {
+		responses = append(responses, edge.ToResponse())
+	}
+	return responses, nil
 }
 
 func (s *WorkflowEdgeService) DeleteWorkflowEdge(ctx context.Context, id uuid.UUID) error {

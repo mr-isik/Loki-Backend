@@ -89,7 +89,14 @@ func main() {
 	authHandler := handler.NewAuthHandler(authService)
 	userHandler := handler.NewUserHandler(userService)
 	workspaceHandler := handler.NewWorkspaceHandler(workspaceService)
-	workflowHandler := handler.NewWorkflowHandler(workflowService)
+	workflowHandler := handler.NewWorkflowHandler(
+		workflowService,
+		workflowNodeService,
+		workflowEdgeService,
+		workflowRunService,
+		nodeRunLogRepo,
+		workflowRunRepo,
+	)
 	workflowEdgeHandler := handler.NewWorkflowEdgeHandler(workflowEdgeService)
 	workflowNodeHandler := handler.NewWorkflowNodeHandler(workflowNodeService)
 	nodeTemplateHandler := handler.NewNodeTemplateHandler(nodeTemplateService)

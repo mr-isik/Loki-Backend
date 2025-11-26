@@ -79,6 +79,7 @@ func SetupRoutes(app *fiber.App, jwtManager *util.JWTManager, authHandler *handl
 	workflows.Delete("/:id", workflowHandler.DeleteWorkflow)
 	workflows.Post("/:id/publish", workflowHandler.PublishWorkflow)
 	workflows.Post("/:id/archive", workflowHandler.ArchiveWorkflow)
+	workflows.Post("/:id/run", workflowHandler.RunWorkflow)
 	workflows.Get("/:workflow_id/edges", workflowEdgeHandler.GetWorkflowEdgesByWorkflow)
 	workflows.Get("/:workflow_id/nodes", workflowNodeHandler.GetWorkflowNodes)
 	workflows.Post("/:workflow_id/runs", workflowRunHandler.StartWorkflowRun)
