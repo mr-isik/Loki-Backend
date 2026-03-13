@@ -1,51 +1,61 @@
 package engine
 
 import (
-	"fmt"
-
 	"github.com/mr-isik/loki-backend/internal/domain"
 	"github.com/mr-isik/loki-backend/internal/engine/nodes"
 )
 
+// defaultRegistry is the package-level registry used by NewNodeExecutor.
+var defaultRegistry = NewNodeRegistry()
+
+func init() {
+	// ── Trigger nodes ──────────────────────────────────────────────
+	defaultRegistry.Register("webhook", func() domain.INodeExecutor { return &nodes.WebhookNode{} })
+	defaultRegistry.Register("cron", func() domain.INodeExecutor { return &nodes.CronNode{} })
+
+	// ── Action nodes ───────────────────────────────────────────────
+	defaultRegistry.Register("http_request", func() domain.INodeExecutor { return &nodes.HttpRequestNode{} })
+	defaultRegistry.Register("shell_command", func() domain.INodeExecutor { return &nodes.ShellCommandNode{} })
+	defaultRegistry.Register("code_js", func() domain.INodeExecutor { return &nodes.CodeJsNode{} })
+	defaultRegistry.Register("email_smtp", func() domain.INodeExecutor { return &nodes.EmailSmtpNode{} })
+	defaultRegistry.Register("slack", func() domain.INodeExecutor { return &nodes.SlackNode{} })
+
+	// ── Control-flow nodes ─────────────────────────────────────────
+	defaultRegistry.Register("condition", func() domain.INodeExecutor { return &nodes.ConditionNode{} })
+	defaultRegistry.Register("loop", func() domain.INodeExecutor { return &nodes.LoopNode{} })
+	defaultRegistry.Register("wait", func() domain.INodeExecutor { return &nodes.WaitNode{} })
+	defaultRegistry.Register("merge", func() domain.INodeExecutor { return &nodes.MergeNode{} })
+
+	// ── Data / utility nodes ───────────────────────────────────────
+	defaultRegistry.Register("set_data", func() domain.INodeExecutor { return &nodes.SetDataNode{} })
+	defaultRegistry.Register("log", func() domain.INodeExecutor { return &nodes.LogNode{} })
+
+	// ── File nodes ─────────────────────────────────────────────────
+	defaultRegistry.Register("file_read", func() domain.INodeExecutor { return &nodes.FileReadNode{} })
+	defaultRegistry.Register("file_write", func() domain.INodeExecutor { return &nodes.FileWriteNode{} })
+
+	// ── Database nodes ─────────────────────────────────────────────
+	defaultRegistry.Register("db_postgres", func() domain.INodeExecutor { return &nodes.DbPostgresNode{} })
+	defaultRegistry.Register("db_mysql", func() domain.INodeExecutor { return &nodes.DbMysqlNode{} })
+
+	// ── Message-queue nodes ────────────────────────────────────────
+	defaultRegistry.Register("mq_rabbitmq_publish", func() domain.INodeExecutor { return &nodes.MqRabbitmqPublishNode{} })
+}
+
+// NewNodeExecutor returns a new INodeExecutor for the given type key.
+// It delegates to the default package-level registry.
 func NewNodeExecutor(typeKey string) (domain.INodeExecutor, error) {
-	switch typeKey {
-	case "http_request":
-		return &nodes.HttpRequestNode{}, nil
-	case "shell_command":
-		return &nodes.ShellCommandNode{}, nil
-	case "condition":
-		return &nodes.ConditionNode{}, nil
-	case "loop":
-		return &nodes.LoopNode{}, nil
-	case "webhook":
-		return &nodes.WebhookNode{}, nil
-	case "cron":
-		return &nodes.CronNode{}, nil
-	case "wait":
-		return &nodes.WaitNode{}, nil
-	case "merge":
-		return &nodes.MergeNode{}, nil
-	case "set_data":
-		return &nodes.SetDataNode{}, nil
-	case "code_js":
-		return &nodes.CodeJsNode{}, nil
-	case "log":
-		return &nodes.LogNode{}, nil
-	case "file_read":
-		return &nodes.FileReadNode{}, nil
-	case "file_write":
-		return &nodes.FileWriteNode{}, nil
-	case "db_postgres":
-		return &nodes.DbPostgresNode{}, nil
-	case "db_mysql":
-		return &nodes.DbMysqlNode{}, nil
-	case "email_smtp":
-		return &nodes.EmailSmtpNode{}, nil
-	case "slack":
-		return &nodes.SlackNode{}, nil
-	case "mq_rabbitmq_publish":
-		return &nodes.MqRabbitmqPublishNode{}, nil
-	default:
-		return nil, fmt.Errorf("unknown node type: %s", typeKey)
-	}
+	return defaultRegistry.Get(typeKey)
+}
+
+// RegisterNode allows external packages to register custom node executors
+// at runtime without modifying this file (Open-Closed Principle).
+func RegisterNode(typeKey string, factory NodeFactory) {
+	defaultRegistry.Register(typeKey, factory)
+}
+
+// DefaultRegistry exposes the package-level registry for advanced use cases
+// such as listing all registered types or checking availability.
+func DefaultRegistry() *NodeRegistry {
+	return defaultRegistry
 }

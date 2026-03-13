@@ -2,9 +2,9 @@ package engine
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
+	"encoding/json"
 	"sync"
 	"time"
 
@@ -22,6 +22,12 @@ type WorkflowEngine struct {
 
 	nodeOutputs map[uuid.UUID]map[string]interface{}
 	mu          sync.RWMutex
+
+	// Parallel execution state
+	depMu            sync.Mutex
+	errMu            sync.Mutex
+	nodeErrors       []error
+	triggeredHandles map[uuid.UUID]string // sourceNodeID → triggeredHandle
 }
 
 func NewWorkflowEngine(
@@ -38,47 +44,104 @@ func NewWorkflowEngine(
 	}
 
 	return &WorkflowEngine{
-		Nodes:       nodeMap,
-		Edges:       edges,
-		RunID:       runID,
-		WorkflowID:  workflowID,
-		LogRepo:     logRepo,
-		RunRepo:     runRepo,
-		nodeOutputs: make(map[uuid.UUID]map[string]interface{}),
+		Nodes:            nodeMap,
+		Edges:            edges,
+		RunID:            runID,
+		WorkflowID:       workflowID,
+		LogRepo:          logRepo,
+		RunRepo:          runRepo,
+		nodeOutputs:      make(map[uuid.UUID]map[string]interface{}),
+		triggeredHandles: make(map[uuid.UUID]string),
 	}
 }
 
+// Execute runs the workflow DAG with parallel execution of independent nodes.
+// Nodes at the same topological level (independent branches) run concurrently.
+// Dependencies are respected via in-degree tracking (Kahn's algorithm).
 func (e *WorkflowEngine) Execute(ctx context.Context) error {
 	if err := e.RunRepo.UpdateStatus(ctx, e.RunID, domain.WorkflowRunStatusRunning, nil); err != nil {
 		return fmt.Errorf("failed to start run: %w", err)
 	}
+
+	// Build in-degree map: how many incoming edges each node has.
+	inDegree := e.buildInDegreeMap()
+
+	// Find start nodes (in-degree == 0).
 	startNodes := e.findStartNodes()
 	if len(startNodes) == 0 {
 		return e.failRun(ctx, "No start nodes found")
 	}
 
-	queue := make([]uuid.UUID, 0, len(e.Nodes))
-	queue = append(queue, startNodes...)
+	var wg sync.WaitGroup
 
-	visited := make(map[uuid.UUID]bool)
+	// scheduleNode launches a goroutine to process a single node.
+	// After completion, it decrements in-degrees of downstream nodes
+	// and schedules any that become ready.
+	var scheduleNode func(nodeID uuid.UUID)
+	scheduleNode = func(nodeID uuid.UUID) {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
 
-	for len(queue) > 0 {
-		nodeID := queue[0]
-		queue = queue[1:]
+			// Check context cancellation.
+			if ctx.Err() != nil {
+				return
+			}
 
-		if visited[nodeID] {
-			continue
-		}
-		visited[nodeID] = true
+			// Process the node.
+			triggeredHandle, err := e.processNode(ctx, nodeID)
+			if err != nil {
+				e.errMu.Lock()
+				e.nodeErrors = append(e.nodeErrors, fmt.Errorf("node %s failed: %w", nodeID, err))
+				e.errMu.Unlock()
+				// Do NOT activate downstream nodes — isolate the failure.
+				return
+			}
 
-		triggeredHandle, err := e.processNode(ctx, nodeID)
-		if err != nil {
-			e.failRun(ctx, fmt.Sprintf("Node %s failed: %v", nodeID, err))
-			return err
-		}
+			// Store the triggered handle for this node so edge filtering works.
+			e.depMu.Lock()
+			e.triggeredHandles[nodeID] = triggeredHandle
+			e.depMu.Unlock()
 
-		nextNodes := e.findNextNodes(nodeID, triggeredHandle)
-		queue = append(queue, nextNodes...)
+			// Find downstream nodes respecting the triggered handle.
+			nextNodes := e.findNextNodes(nodeID, triggeredHandle)
+
+			// Decrement in-degree for each downstream and schedule if ready.
+			for _, nextID := range nextNodes {
+				ready := false
+
+				e.depMu.Lock()
+				inDegree[nextID]--
+				if inDegree[nextID] == 0 {
+					ready = true
+				}
+				e.depMu.Unlock()
+
+				if ready {
+					scheduleNode(nextID)
+				}
+			}
+		}()
+	}
+
+	// Launch all start nodes in parallel.
+	for _, nodeID := range startNodes {
+		scheduleNode(nodeID)
+	}
+
+	// Wait for all goroutines to finish.
+	wg.Wait()
+
+	// Check for errors.
+	e.errMu.Lock()
+	errs := make([]error, len(e.nodeErrors))
+	copy(errs, e.nodeErrors)
+	e.errMu.Unlock()
+
+	if len(errs) > 0 {
+		now := time.Now()
+		e.RunRepo.UpdateStatus(ctx, e.RunID, domain.WorkflowRunStatusFailed, &now)
+		return errors.Join(errs...)
 	}
 
 	now := time.Now()
@@ -89,6 +152,26 @@ func (e *WorkflowEngine) Execute(ctx context.Context) error {
 	return nil
 }
 
+// buildInDegreeMap calculates the number of incoming edges for each node.
+// Only edges that are "relevant" are counted — for nodes whose source has
+// a triggered handle filter, we count all edges initially and decrement
+// dynamically during execution.
+func (e *WorkflowEngine) buildInDegreeMap() map[uuid.UUID]int {
+	inDegree := make(map[uuid.UUID]int)
+
+	// Initialize all nodes with 0.
+	for id := range e.Nodes {
+		inDegree[id] = 0
+	}
+
+	// Count incoming edges.
+	for _, edge := range e.Edges {
+		inDegree[edge.TargetNodeID]++
+	}
+
+	return inDegree
+}
+
 // processNode executes a single node.
 func (e *WorkflowEngine) processNode(ctx context.Context, nodeID uuid.UUID) (string, error) {
 	node, exists := e.Nodes[nodeID]
@@ -96,7 +179,7 @@ func (e *WorkflowEngine) processNode(ctx context.Context, nodeID uuid.UUID) (str
 		return "", fmt.Errorf("node %s not found", nodeID)
 	}
 
-	// 1. Create Log Entry (Pending)
+	// 1. Create Log Entry (Running)
 	logEntry, err := e.LogRepo.Create(ctx, &domain.CreateNodeRunLogRequest{
 		RunID:  e.RunID,
 		NodeID: nodeID,
@@ -119,13 +202,9 @@ func (e *WorkflowEngine) processNode(ctx context.Context, nodeID uuid.UUID) (str
 	for _, edge := range incomingEdges {
 		sourceOutput, ok := e.nodeOutputs[edge.SourceNodeID]
 		if ok {
-			// We can map specific outputs to specific inputs if the Edge has that info.
-			// For now, we merge the whole output map or use the SourceHandle.
-			// A common pattern: inputs[edge.TargetHandle] = sourceOutput[edge.SourceHandle]
 			if val, valOk := sourceOutput[edge.SourceHandle]; valOk {
 				inputsFromUpstream[edge.TargetHandle] = val
 			} else {
-				// Fallback: if source output is just a value, or we want to pass everything
 				inputsFromUpstream[edge.TargetHandle] = sourceOutput
 			}
 		}
@@ -202,9 +281,6 @@ func (e *WorkflowEngine) findNextNodes(nodeID uuid.UUID, triggeredHandle string)
 	var next []uuid.UUID
 	for _, edge := range e.Edges {
 		if edge.SourceNodeID == nodeID {
-			// If triggeredHandle is specified, only follow matching edges.
-			// If triggeredHandle is empty or "default", follow all or default.
-			// For now, strict matching if handle is provided.
 			if triggeredHandle != "" && edge.SourceHandle != triggeredHandle {
 				continue
 			}
@@ -225,15 +301,6 @@ func (e *WorkflowEngine) getIncomingEdges(nodeID uuid.UUID) []domain.WorkflowEdg
 }
 
 func (e *WorkflowEngine) updateLog(ctx context.Context, logID uuid.UUID, status domain.NodeRunLogStatus, output, errorMsg string) error {
-	// We need a repository method that supports these fields.
-	// The interface has Update(ctx, id, req).
-	// But req has Status, LogOutput, ErrorMsg.
-	// It doesn't seem to have FinishedAt in the Request struct based on previous view,
-	// but the domain model has it.
-	// Let's check UpdateNodeRunLogRequest again.
-	// It has Status, LogOutput, ErrorMsg.
-	// The repository implementation likely handles FinishedAt setting if status is terminal.
-
 	req := &domain.UpdateNodeRunLogRequest{
 		Status:    status,
 		LogOutput: output,
@@ -255,6 +322,4 @@ func (e *WorkflowEngine) logNodeError(ctx context.Context, nodeID uuid.UUID, msg
 		NodeID: nodeID,
 		Status: domain.NodeRunLogStatusFailed,
 	})
-	// We can't easily update it with the message if we just created it without ID return in one line,
-	// but this is a fallback.
 }
