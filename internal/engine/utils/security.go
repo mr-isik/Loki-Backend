@@ -3,6 +3,7 @@ package utils
 import (
 	"context"
 	"errors"
+	"path/filepath"
 	"strings"
 )
 
@@ -45,6 +46,35 @@ func IsCommandAllowed(command string, args []string) bool {
 		}
 	}
 	return true
+}
+
+const MaxFileSize = 5 * 1024 * 1024 // 5MB
+
+// ValidateFilePath checks if a requested file path is safe.
+func ValidateFilePath(filePath string) error {
+	if strings.TrimSpace(filePath) == "" {
+		return errors.New("file path cannot be empty")
+	}
+
+	// Prevent directory traversal
+	if strings.Contains(filePath, "..") {
+		return errors.New("directory traversal is not allowed")
+	}
+
+	cleanPath := filepath.Clean(filePath)
+
+	// Blacklist critical system directories
+	sensitivePrefixes := []string{
+		"/etc", "/var", "/sys", "/proc", "/dev", "/root", "/boot", "/usr/lib",
+	}
+
+	for _, prefix := range sensitivePrefixes {
+		if strings.HasPrefix(cleanPath, prefix) {
+			return errors.New("access to sensitive system directories is forbidden")
+		}
+	}
+
+	return nil
 }
 
 // SanitizeError formats timeout Context errors and hides sensitive Docker/internal errors.

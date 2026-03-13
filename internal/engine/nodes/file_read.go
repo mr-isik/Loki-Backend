@@ -4,9 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/mr-isik/loki-backend/internal/domain"
+	"github.com/mr-isik/loki-backend/internal/engine/utils"
 )
 
 type FileReadNode struct{}
@@ -33,13 +35,56 @@ func (n *FileReadNode) Execute(ctx context.Context, rawData []byte) (*domain.Nod
 		}, fmt.Errorf("path is required")
 	}
 
-	content, err := os.ReadFile(data.Path)
-	if err != nil {
+	if err := utils.ValidateFilePath(data.Path); err != nil {
 		return &domain.NodeResult{
 			Status:          "failed",
 			TriggeredHandle: "output_error",
-			Log:             fmt.Sprintf("Failed to read file: %v", err),
+			Log:             fmt.Sprintf("Security violation: %v", err),
 			OutputData:      map[string]interface{}{"error": err.Error()},
+		}, nil
+	}
+
+	fileInfo, err := os.Stat(data.Path)
+	if err != nil {
+		sanitizedErr := utils.SanitizeError(err)
+		return &domain.NodeResult{
+			Status:          "failed",
+			TriggeredHandle: "output_error",
+			Log:             fmt.Sprintf("Failed to stat file: %s", sanitizedErr),
+			OutputData:      map[string]interface{}{"error": "File not found or inaccessible"},
+		}, nil
+	}
+
+	if fileInfo.Size() > utils.MaxFileSize {
+		errMsg := "File size exceeds the 5MB limit"
+		return &domain.NodeResult{
+			Status:          "failed",
+			TriggeredHandle: "output_error",
+			Log:             errMsg,
+			OutputData:      map[string]interface{}{"error": errMsg},
+		}, nil
+	}
+
+	file, err := os.Open(data.Path)
+	if err != nil {
+		sanitizedErr := utils.SanitizeError(err)
+		return &domain.NodeResult{
+			Status:          "failed",
+			TriggeredHandle: "output_error",
+			Log:             fmt.Sprintf("Failed to open file: %s", sanitizedErr),
+			OutputData:      map[string]interface{}{"error": "Failed to open file"},
+		}, nil
+	}
+	defer file.Close()
+
+	content, err := io.ReadAll(io.LimitReader(file, utils.MaxFileSize))
+	if err != nil {
+		sanitizedErr := utils.SanitizeError(err)
+		return &domain.NodeResult{
+			Status:          "failed",
+			TriggeredHandle: "output_error",
+			Log:             fmt.Sprintf("Failed to read file: %s", sanitizedErr),
+			OutputData:      map[string]interface{}{"error": "Failed to read file"},
 		}, nil
 	}
 
