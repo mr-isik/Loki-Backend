@@ -52,4 +52,27 @@ func TestShellCommandNode_Execute(t *testing.T) {
 			t.Errorf("Expected handle output_error, got %s", result.TriggeredHandle)
 		}
 	})
+
+	t.Run("Blacklisted Command", func(t *testing.T) {
+		input := map[string]interface{}{
+			"command": "rm",
+			"args":    []string{"-rf", "/"},
+		}
+
+		inputBytes, _ := json.Marshal(input)
+
+		result, err := node.Execute(ctx, inputBytes)
+		if err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
+
+		if result.Status != "failed" {
+			t.Fatalf("Expected status failed, got %s. Log: %s", result.Status, result.Log)
+		}
+
+		errStr := result.OutputData["error"].(string)
+		if errStr != "Command rejected due to security policy constraints." {
+			t.Errorf("Expected security policy error, got '%s'", errStr)
+		}
+	})
 }

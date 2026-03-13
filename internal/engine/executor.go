@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/mr-isik/loki-backend/internal/domain"
+	"github.com/mr-isik/loki-backend/internal/engine/utils"
 )
 
 type WorkflowEngine struct {
@@ -228,13 +229,24 @@ func (e *WorkflowEngine) processNode(ctx context.Context, nodeID uuid.UUID) (str
 		return "", err
 	}
 
-	// 4. Execute
+	// 4. Execute with Timeout
 	jsonData, _ := json.Marshal(inputData)
-	result, err := executor.Execute(ctx, jsonData)
+	
+	timeoutCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	result, err := executor.Execute(timeoutCtx, jsonData)
 
 	if err != nil {
-		e.updateLog(ctx, logEntry.ID, domain.NodeRunLogStatusFailed, "", err.Error())
-		return "", err
+		sanitizedErr := utils.SanitizeError(err)
+		
+		// Ensure deadline exceeded is caught if not surfaced cleanly
+		if errors.Is(timeoutCtx.Err(), context.DeadlineExceeded) {
+			sanitizedErr = "Execution timed out after 10 seconds."
+		}
+
+		e.updateLog(ctx, logEntry.ID, domain.NodeRunLogStatusFailed, "", sanitizedErr)
+		return "", errors.New(sanitizedErr)
 	}
 
 	// 5. Save Output and Log

@@ -7,6 +7,7 @@ import (
 
 	"github.com/mr-isik/loki-backend/internal/domain"
 	"github.com/mr-isik/loki-backend/internal/engine/docker"
+	"github.com/mr-isik/loki-backend/internal/engine/utils"
 )
 
 type CodeJsNode struct{}
@@ -29,12 +30,13 @@ func (n *CodeJsNode) Execute(ctx context.Context, rawData []byte) (*domain.NodeR
 	// Initialize Docker runner
 	runner, err := docker.NewRunner()
 	if err != nil {
+		sanitizedErr := utils.SanitizeError(err)
 		return &domain.NodeResult{
 			Status:          "failed",
 			TriggeredHandle: "output_error",
-			Log:             fmt.Sprintf("Failed to initialize Docker runner: %v", err),
+			Log:             fmt.Sprintf("Failed to initialize Docker runner: %v", sanitizedErr),
 			OutputData: map[string]interface{}{
-				"error": err.Error(),
+				"error": sanitizedErr,
 			},
 		}, nil
 	}
@@ -68,11 +70,12 @@ process.stdout.write(JSON.stringify({ result: _result, logs: _logs, error: _erro
 	})
 
 	if err != nil {
+		sanitizedErr := utils.SanitizeError(err)
 		return &domain.NodeResult{
 			Status:          "failed",
 			TriggeredHandle: "output_error",
-			Log:             fmt.Sprintf("Node.js Execution Error: %v\nOutput: %s", err, outputStr),
-			OutputData:      map[string]interface{}{"error": err.Error(), "logs": []string{outputStr}},
+			Log:             fmt.Sprintf("Node.js Execution Error: %v", sanitizedErr),
+			OutputData:      map[string]interface{}{"error": sanitizedErr, "logs": []string{outputStr}},
 		}, nil
 	}
 

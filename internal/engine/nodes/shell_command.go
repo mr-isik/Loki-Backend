@@ -8,6 +8,7 @@ import (
 
 	"github.com/mr-isik/loki-backend/internal/domain"
 	"github.com/mr-isik/loki-backend/internal/engine/docker"
+	"github.com/mr-isik/loki-backend/internal/engine/utils"
 )
 
 type ShellCommandNode struct{}
@@ -36,14 +37,26 @@ func (n *ShellCommandNode) Execute(ctx context.Context, rawData []byte) (*domain
 		}, fmt.Errorf("command is required")
 	}
 
-	runner, err := docker.NewRunner()
-	if err != nil {
+	if !utils.IsCommandAllowed(data.Command, data.Args) {
 		return &domain.NodeResult{
 			Status:          "failed",
 			TriggeredHandle: "output_error",
-			Log:             fmt.Sprintf("Failed to initialize Docker runner: %v", err),
+			Log:             "Command rejected: Contains blacklisted keywords",
 			OutputData: map[string]interface{}{
-				"error": err.Error(),
+				"error": "Command rejected due to security policy constraints.",
+			},
+		}, nil
+	}
+
+	runner, err := docker.NewRunner()
+	if err != nil {
+		sanitizedErr := utils.SanitizeError(err)
+		return &domain.NodeResult{
+			Status:          "failed",
+			TriggeredHandle: "output_error",
+			Log:             fmt.Sprintf("Failed to initialize Docker runner: %v", sanitizedErr),
+			OutputData: map[string]interface{}{
+				"error": sanitizedErr,
 			},
 		}, nil
 	}
@@ -57,12 +70,13 @@ func (n *ShellCommandNode) Execute(ctx context.Context, rawData []byte) (*domain
 	})
 
 	if err != nil {
+		sanitizedErr := utils.SanitizeError(err)
 		return &domain.NodeResult{
 			Status:          "failed",
 			TriggeredHandle: "output_error",
-			Log:             fmt.Sprintf("Command failed: %v\nOutput: %s", err, outputStr),
+			Log:             fmt.Sprintf("Command failed: %v", sanitizedErr),
 			OutputData: map[string]interface{}{
-				"error":  err.Error(),
+				"error":  sanitizedErr,
 				"output": outputStr,
 			},
 		}, nil
