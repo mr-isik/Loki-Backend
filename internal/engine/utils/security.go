@@ -63,15 +63,9 @@ func ValidateFilePath(filePath string) error {
 
 	cleanPath := filepath.Clean(filePath)
 
-	// Blacklist critical system directories
-	sensitivePrefixes := []string{
-		"/etc", "/var", "/sys", "/proc", "/dev", "/root", "/boot", "/usr/lib",
-	}
-
-	for _, prefix := range sensitivePrefixes {
-		if strings.HasPrefix(cleanPath, prefix) {
-			return errors.New("access to sensitive system directories is forbidden")
-		}
+	// Whitelist approach: only allow files inside /tmp/loki/
+	if !strings.HasPrefix(cleanPath, "/tmp/loki/") {
+		return errors.New("access to this directory is forbidden, only /tmp/loki/ is allowed")
 	}
 
 	return nil

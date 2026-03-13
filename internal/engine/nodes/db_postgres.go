@@ -54,7 +54,7 @@ func (n *DbPostgresNode) Execute(ctx context.Context, rawData []byte) (*domain.N
 
 	var db *sql.DB
 
-	// Check connection pool cache
+	// Check connection pool cache using LoadOrStore for thread safety
 	if pooledDb, ok := dbPool.Load(dsn); ok {
 		db = pooledDb.(*sql.DB)
 	} else {
@@ -72,8 +72,12 @@ func (n *DbPostgresNode) Execute(ctx context.Context, rawData []byte) (*domain.N
 		newDb.SetMaxIdleConns(5)                  // Keep alive idle conns
 		newDb.SetConnMaxLifetime(5 * time.Minute) // Maximum duration a connection is kept alive
 
-		dbPool.Store(dsn, newDb)
-		db = newDb
+		actualDB, loaded := dbPool.LoadOrStore(dsn, newDb)
+		if loaded {
+			// Another goroutine beat us to it; close the duplicate pool
+			newDb.Close()
+		}
+		db = actualDB.(*sql.DB)
 	}
 
 	// Simple query execution. For SELECT, we might want to return rows.

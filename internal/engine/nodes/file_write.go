@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/mr-isik/loki-backend/internal/domain"
+	"github.com/mr-isik/loki-backend/internal/engine/utils"
 )
 
 type FileWriteNode struct{}
@@ -34,6 +35,16 @@ func (n *FileWriteNode) Execute(ctx context.Context, rawData []byte) (*domain.No
 			Log:        "Path is required",
 			OutputData: map[string]interface{}{"error": "Path is required"},
 		}, fmt.Errorf("path is required")
+	}
+
+	if err := utils.ValidateFilePath(data.Path); err != nil {
+		sanitizedErr := utils.SanitizeError(err)
+		return &domain.NodeResult{
+			Status:          "failed",
+			TriggeredHandle: "output_error",
+			Log:             fmt.Sprintf("Security: %v", sanitizedErr),
+			OutputData:      map[string]interface{}{"error": sanitizedErr},
+		}, nil
 	}
 
 	// Ensure directory exists
