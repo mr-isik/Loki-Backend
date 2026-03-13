@@ -6,14 +6,15 @@ import (
 	"fmt"
 
 	"github.com/mr-isik/loki-backend/internal/domain"
+	"github.com/mr-isik/loki-backend/internal/engine/docker"
+	"github.com/mr-isik/loki-backend/internal/engine/utils"
 )
 
 type ConditionNode struct{}
 
 type conditionData struct {
-	Value1   interface{} `json:"value1"`
-	Operator string      `json:"operator"`
-	Value2   interface{} `json:"value2"`
+	Expression string                 `json:"expression"`
+	Input      map[string]interface{} `json:"input"`
 }
 
 func (n *ConditionNode) Execute(ctx context.Context, rawData []byte) (*domain.NodeResult, error) {
@@ -26,27 +27,80 @@ func (n *ConditionNode) Execute(ctx context.Context, rawData []byte) (*domain.No
 		}, err
 	}
 
-	result := false
-	switch data.Operator {
-	case "==":
-		result = data.Value1 == data.Value2
-	case "!=":
-		result = data.Value1 != data.Value2
-	case ">":
-		result = compare(data.Value1, data.Value2) > 0
-	case "<":
-		result = compare(data.Value1, data.Value2) < 0
-	case ">=":
-		result = compare(data.Value1, data.Value2) >= 0
-	case "<=":
-		result = compare(data.Value1, data.Value2) <= 0
-	default:
+	if data.Expression == "" {
 		return &domain.NodeResult{
-			Status:     "failed",
-			Log:        fmt.Sprintf("Unknown operator: %s", data.Operator),
-			OutputData: map[string]interface{}{"error": "Unknown operator"},
-		}, fmt.Errorf("unknown operator: %s", data.Operator)
+			Status:          "failed",
+			TriggeredHandle: "output_error",
+			Log:             "Expression is required",
+			OutputData:      map[string]interface{}{"error": "Expression is required"},
+		}, nil
 	}
+
+	runner, err := docker.NewRunner()
+	if err != nil {
+		sanitizedErr := utils.SanitizeError(err)
+		return &domain.NodeResult{
+			Status:          "failed",
+			TriggeredHandle: "output_error",
+			Log:             fmt.Sprintf("Failed to initialize Docker runner: %v", sanitizedErr),
+			OutputData:      map[string]interface{}{"error": sanitizedErr},
+		}, nil
+	}
+
+	inputJSON, _ := json.Marshal(data.Input)
+	codeJSON, _ := json.Marshal(data.Expression)
+
+	wrapperScript := fmt.Sprintf(`
+const input = %s;
+let _result = false;
+let _error = null;
+try {
+    _result = Boolean(eval(%s));
+} catch (err) {
+    _error = err.message || String(err);
+}
+process.stdout.write(JSON.stringify({ result: _result, error: _error }));
+`, string(inputJSON), string(codeJSON))
+
+	outputStr, err := runner.RunContainer(ctx, docker.RunRequest{
+		Image:   "node:alpine",
+		Command: []string{"node", "-e", wrapperScript},
+	})
+
+	if err != nil {
+		sanitizedErr := utils.SanitizeError(err)
+		return &domain.NodeResult{
+			Status:          "failed",
+			TriggeredHandle: "output_error",
+			Log:             fmt.Sprintf("Condition JS Execution Error: %v", sanitizedErr),
+			OutputData:      map[string]interface{}{"error": sanitizedErr},
+		}, nil
+	}
+
+	var parsedOutput struct {
+		Result bool    `json:"result"`
+		Error  *string `json:"error"`
+	}
+
+	if err := json.Unmarshal([]byte(outputStr), &parsedOutput); err != nil {
+		return &domain.NodeResult{
+			Status:          "failed",
+			TriggeredHandle: "output_error",
+			Log:             fmt.Sprintf("Failed to parse condition output: %v", err),
+			OutputData:      map[string]interface{}{"error": "invalid output from condition engine"},
+		}, nil
+	}
+
+	if parsedOutput.Error != nil {
+		return &domain.NodeResult{
+			Status:          "failed",
+			TriggeredHandle: "output_error",
+			Log:             fmt.Sprintf("JS Expression Error: %s", *parsedOutput.Error),
+			OutputData:      map[string]interface{}{"error": *parsedOutput.Error},
+		}, nil
+	}
+
+	result := parsedOutput.Result
 
 	triggeredHandle := "output_false"
 	if result {
@@ -61,50 +115,4 @@ func (n *ConditionNode) Execute(ctx context.Context, rawData []byte) (*domain.No
 			"result": result,
 		},
 	}, nil
-}
-
-// compare compares two values. It returns 1 if v1 > v2, -1 if v1 < v2, 0 if equal.
-// It tries to convert to float64 for comparison if possible.
-func compare(v1, v2 interface{}) int {
-	f1, ok1 := toFloat(v1)
-	f2, ok2 := toFloat(v2)
-
-	if ok1 && ok2 {
-		if f1 > f2 {
-			return 1
-		}
-		if f1 < f2 {
-			return -1
-		}
-		return 0
-	}
-
-	// Fallback to string comparison
-	s1 := fmt.Sprintf("%v", v1)
-	s2 := fmt.Sprintf("%v", v2)
-
-	if s1 > s2 {
-		return 1
-	}
-	if s1 < s2 {
-		return -1
-	}
-	return 0
-}
-
-func toFloat(v interface{}) (float64, bool) {
-	switch i := v.(type) {
-	case float64:
-		return i, true
-	case float32:
-		return float64(i), true
-	case int:
-		return float64(i), true
-	case int64:
-		return float64(i), true
-	case int32:
-		return float64(i), true
-	default:
-		return 0, false
-	}
 }

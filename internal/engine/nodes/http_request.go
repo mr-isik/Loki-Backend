@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
+	"time"
 
 	"github.com/mr-isik/loki-backend/internal/domain"
 )
@@ -14,10 +16,12 @@ import (
 type HttpRequestNode struct{}
 
 type httpData struct {
-	URL     string            `json:"url"`
-	Method  string            `json:"method"`
-	Headers map[string]string `json:"headers"`
-	Body    interface{}       `json:"body"`
+	URL         string            `json:"url"`
+	Method      string            `json:"method"`
+	Headers     map[string]string `json:"headers"`
+	QueryParams map[string]string `json:"query_params"`
+	Timeout     int               `json:"timeout"`
+	Body        interface{}       `json:"body"`
 }
 
 func (n *HttpRequestNode) Execute(ctx context.Context, rawData []byte) (*domain.NodeResult, error) {
@@ -38,6 +42,24 @@ func (n *HttpRequestNode) Execute(ctx context.Context, rawData []byte) (*domain.
 		}, fmt.Errorf("URL is required")
 	}
 
+	reqURL := data.URL
+	if len(data.QueryParams) > 0 {
+		u, err := url.Parse(reqURL)
+		if err != nil {
+			return &domain.NodeResult{
+				Status:     "failed",
+				Log:        fmt.Sprintf("Failed to parse URL: %v", err),
+				OutputData: map[string]interface{}{"error": err.Error()},
+			}, err
+		}
+		q := u.Query()
+		for k, v := range data.QueryParams {
+			q.Add(k, v)
+		}
+		u.RawQuery = q.Encode()
+		reqURL = u.String()
+	}
+
 	var bodyReader io.Reader
 	if data.Body != nil {
 		jsonBody, err := json.Marshal(data.Body)
@@ -51,7 +73,13 @@ func (n *HttpRequestNode) Execute(ctx context.Context, rawData []byte) (*domain.
 		bodyReader = bytes.NewBuffer(jsonBody)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, data.Method, data.URL, bodyReader)
+	if data.Timeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, time.Duration(data.Timeout)*time.Second)
+		defer cancel()
+	}
+
+	req, err := http.NewRequestWithContext(ctx, data.Method, reqURL, bodyReader)
 	if err != nil {
 		return &domain.NodeResult{
 			Status:     "failed",

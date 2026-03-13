@@ -17,44 +17,52 @@ func TestConditionNode_Execute(t *testing.T) {
 		expectedResult bool
 	}{
 		{
-			name: "Equal True",
+			name: "Simple Boolean True",
 			data: map[string]interface{}{
-				"value1":   10,
-				"operator": "==",
-				"value2":   10,
+				"expression": "10 == 10",
 			},
 			expectedHandle: "output_true",
 			expectedResult: true,
 		},
 		{
-			name: "Equal False",
+			name: "Simple Boolean False",
 			data: map[string]interface{}{
-				"value1":   10,
-				"operator": "==",
-				"value2":   20,
+				"expression": "10 == 20",
 			},
 			expectedHandle: "output_false",
 			expectedResult: false,
 		},
 		{
-			name: "Greater Than True",
+			name: "With Input Variables True",
 			data: map[string]interface{}{
-				"value1":   20,
-				"operator": ">",
-				"value2":   10,
+				"expression": "input.status === 'success' && input.retryCount < 3",
+				"input": map[string]interface{}{
+					"status":     "success",
+					"retryCount": 1,
+				},
 			},
 			expectedHandle: "output_true",
 			expectedResult: true,
 		},
 		{
-			name: "String Comparison",
+			name: "With Input Variables False",
 			data: map[string]interface{}{
-				"value1":   "apple",
-				"operator": "==",
-				"value2":   "apple",
+				"expression": "input.status === 'success' && input.retryCount < 3",
+				"input": map[string]interface{}{
+					"status":     "success",
+					"retryCount": 5,
+				},
 			},
-			expectedHandle: "output_true",
-			expectedResult: true,
+			expectedHandle: "output_false",
+			expectedResult: false,
+		},
+		{
+			name: "Invalid expression",
+			data: map[string]interface{}{
+				"expression": "+++",
+			},
+			expectedHandle: "output_error",
+			expectedResult: false,
 		},
 	}
 
@@ -66,13 +74,13 @@ func TestConditionNode_Execute(t *testing.T) {
 				t.Fatalf("Expected no error, got %v", err)
 			}
 
-			if result.Status != "completed" {
-				t.Errorf("Expected status completed, got %s", result.Status)
+			if result.Status != "completed" && result.Status != "failed" {
+				t.Errorf("Expected status completed or failed, got %s", result.Status)
 			}
 			if result.TriggeredHandle != tt.expectedHandle {
 				t.Errorf("Expected handle %s, got %s", tt.expectedHandle, result.TriggeredHandle)
 			}
-			if result.OutputData["result"] != tt.expectedResult {
+			if result.OutputData["result"] != nil && result.OutputData["result"] != tt.expectedResult {
 				t.Errorf("Expected result %v, got %v", tt.expectedResult, result.OutputData["result"])
 			}
 		})
