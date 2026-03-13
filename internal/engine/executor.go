@@ -1,16 +1,16 @@
 package engine
 
 import (
-	"context"
-	"errors"
-	"fmt"
-	"encoding/json"
-	"sync"
-	"time"
+"context"
+"encoding/json"
+"errors"
+"fmt"
+"sync"
+"time"
 
-	"github.com/google/uuid"
-	"github.com/mr-isik/loki-backend/internal/domain"
-	"github.com/mr-isik/loki-backend/internal/engine/utils"
+"github.com/google/uuid"
+"github.com/mr-isik/loki-backend/internal/domain"
+"github.com/mr-isik/loki-backend/internal/engine/utils"
 )
 
 type WorkflowEngine struct {
@@ -29,15 +29,17 @@ type WorkflowEngine struct {
 	errMu            sync.Mutex
 	nodeErrors       []error
 	triggeredHandles map[uuid.UUID]string // sourceNodeID → triggeredHandle
+
+	isSubEngine bool
 }
 
 func NewWorkflowEngine(
-	nodes []domain.WorkflowNode,
-	edges []domain.WorkflowEdge,
-	runID uuid.UUID,
-	workflowID uuid.UUID,
-	logRepo domain.NodeRunLogRepository,
-	runRepo domain.WorkflowRunRepository,
+nodes []domain.WorkflowNode,
+edges []domain.WorkflowEdge,
+runID uuid.UUID,
+workflowID uuid.UUID,
+logRepo domain.NodeRunLogRepository,
+runRepo domain.WorkflowRunRepository,
 ) *WorkflowEngine {
 	nodeMap := make(map[uuid.UUID]domain.WorkflowNode)
 	for _, node := range nodes {
@@ -57,18 +59,18 @@ func NewWorkflowEngine(
 }
 
 // Execute runs the workflow DAG with parallel execution of independent nodes.
-// Nodes at the same topological level (independent branches) run concurrently.
-// Dependencies are respected via in-degree tracking (Kahn's algorithm).
 func (e *WorkflowEngine) Execute(ctx context.Context) error {
-	if err := e.RunRepo.UpdateStatus(ctx, e.RunID, domain.WorkflowRunStatusRunning, nil); err != nil {
-		return fmt.Errorf("failed to start run: %w", err)
+	if !e.isSubEngine {
+		if err := e.RunRepo.UpdateStatus(ctx, e.RunID, domain.WorkflowRunStatusRunning, nil); err != nil {
+			return fmt.Errorf("failed to start run: %w", err)
+		}
 	}
 
 	// Build in-degree map: how many incoming edges each node has.
 	inDegree := e.buildInDegreeMap()
 
 	// Find start nodes (in-degree == 0).
-	startNodes := e.findStartNodes()
+	startNodes := e.findStartNodes(inDegree)
 	if len(startNodes) == 0 {
 		return e.failRun(ctx, "No start nodes found")
 	}
@@ -76,38 +78,48 @@ func (e *WorkflowEngine) Execute(ctx context.Context) error {
 	var wg sync.WaitGroup
 
 	// scheduleNode launches a goroutine to process a single node.
-	// After completion, it decrements in-degrees of downstream nodes
-	// and schedules any that become ready.
 	var scheduleNode func(nodeID uuid.UUID)
 	scheduleNode = func(nodeID uuid.UUID) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
 
-			// Check context cancellation.
 			if ctx.Err() != nil {
 				return
 			}
 
-			// Process the node.
 			triggeredHandle, err := e.processNode(ctx, nodeID)
-			if err != nil {
+			
+			node := e.Nodes[nodeID]
+			nodeType := ""
+			if t, ok := node.Data["type"].(string); ok {
+				nodeType = t
+			}
+
+			// Sub-Workflow execution for loops
+			if err == nil && nodeType == "loop" {
+				err = e.executeLoop(ctx, nodeID)
+				if err != nil {
+					e.errMu.Lock()
+					e.nodeErrors = append(e.nodeErrors, fmt.Errorf("loop iteration failed at node %s: %w", nodeID, err))
+					e.errMu.Unlock()
+					return
+				}
+				// Force the main engine to continue ONLY along output_done branch
+				triggeredHandle = "output_done"
+			} else if err != nil {
 				e.errMu.Lock()
 				e.nodeErrors = append(e.nodeErrors, fmt.Errorf("node %s failed: %w", nodeID, err))
 				e.errMu.Unlock()
-				// Do NOT activate downstream nodes — isolate the failure.
 				return
 			}
 
-			// Store the triggered handle for this node so edge filtering works.
 			e.depMu.Lock()
 			e.triggeredHandles[nodeID] = triggeredHandle
 			e.depMu.Unlock()
 
-			// Find downstream nodes respecting the triggered handle.
 			nextNodes := e.findNextNodes(nodeID, triggeredHandle)
 
-			// Decrement in-degree for each downstream and schedule if ready.
 			for _, nextID := range nextNodes {
 				ready := false
 
@@ -125,62 +137,59 @@ func (e *WorkflowEngine) Execute(ctx context.Context) error {
 		}()
 	}
 
-	// Launch all start nodes in parallel.
 	for _, nodeID := range startNodes {
 		scheduleNode(nodeID)
 	}
 
-	// Wait for all goroutines to finish.
 	wg.Wait()
 
-	// Check for errors.
 	e.errMu.Lock()
 	errs := make([]error, len(e.nodeErrors))
 	copy(errs, e.nodeErrors)
 	e.errMu.Unlock()
 
 	if len(errs) > 0 {
-		now := time.Now()
-		e.RunRepo.UpdateStatus(ctx, e.RunID, domain.WorkflowRunStatusFailed, &now)
+		if !e.isSubEngine {
+			now := time.Now()
+			e.RunRepo.UpdateStatus(ctx, e.RunID, domain.WorkflowRunStatusFailed, &now)
+		}
 		return errors.Join(errs...)
 	}
 
-	now := time.Now()
-	if err := e.RunRepo.UpdateStatus(ctx, e.RunID, domain.WorkflowRunStatusCompleted, &now); err != nil {
-		return fmt.Errorf("failed to complete run: %w", err)
+	if !e.isSubEngine {
+		now := time.Now()
+		if err := e.RunRepo.UpdateStatus(ctx, e.RunID, domain.WorkflowRunStatusCompleted, &now); err != nil {
+			return fmt.Errorf("failed to complete run: %w", err)
+		}
 	}
 
 	return nil
 }
 
-// buildInDegreeMap calculates the number of incoming edges for each node.
-// Only edges that are "relevant" are counted — for nodes whose source has
-// a triggered handle filter, we count all edges initially and decrement
-// dynamically during execution.
 func (e *WorkflowEngine) buildInDegreeMap() map[uuid.UUID]int {
 	inDegree := make(map[uuid.UUID]int)
 
-	// Initialize all nodes with 0.
 	for id := range e.Nodes {
 		inDegree[id] = 0
 	}
 
-	// Count incoming edges.
 	for _, edge := range e.Edges {
-		inDegree[edge.TargetNodeID]++
+		if _, hasSource := e.Nodes[edge.SourceNodeID]; hasSource {
+			if _, hasTarget := e.Nodes[edge.TargetNodeID]; hasTarget {
+				inDegree[edge.TargetNodeID]++
+			}
+		}
 	}
 
 	return inDegree
 }
 
-// processNode executes a single node.
 func (e *WorkflowEngine) processNode(ctx context.Context, nodeID uuid.UUID) (string, error) {
 	node, exists := e.Nodes[nodeID]
 	if !exists {
 		return "", fmt.Errorf("node %s not found", nodeID)
 	}
 
-	// 1. Create Log Entry (Running)
 	logEntry, err := e.LogRepo.Create(ctx, &domain.CreateNodeRunLogRequest{
 		RunID:  e.RunID,
 		NodeID: nodeID,
@@ -229,7 +238,6 @@ func (e *WorkflowEngine) processNode(ctx context.Context, nodeID uuid.UUID) (str
 		return "", err
 	}
 
-	// 4. Execute with Timeout
 	jsonData, _ := json.Marshal(inputData)
 	
 	timeoutCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
@@ -240,7 +248,6 @@ func (e *WorkflowEngine) processNode(ctx context.Context, nodeID uuid.UUID) (str
 	if err != nil {
 		sanitizedErr := utils.SanitizeError(err)
 		
-		// Ensure deadline exceeded is caught if not surfaced cleanly
 		if errors.Is(timeoutCtx.Err(), context.DeadlineExceeded) {
 			sanitizedErr = "Execution timed out after 10 seconds."
 		}
@@ -249,7 +256,6 @@ func (e *WorkflowEngine) processNode(ctx context.Context, nodeID uuid.UUID) (str
 		return "", errors.New(sanitizedErr)
 	}
 
-	// 5. Save Output and Log
 	e.mu.Lock()
 	e.nodeOutputs[nodeID] = result.OutputData
 	e.mu.Unlock()
@@ -260,7 +266,6 @@ func (e *WorkflowEngine) processNode(ctx context.Context, nodeID uuid.UUID) (str
 	}
 
 	if err := e.updateLog(ctx, logEntry.ID, status, result.Log, ""); err != nil {
-		// Just log error, don't fail flow
 		fmt.Printf("failed to update log: %v\n", err)
 	}
 
@@ -271,18 +276,111 @@ func (e *WorkflowEngine) processNode(ctx context.Context, nodeID uuid.UUID) (str
 	return result.TriggeredHandle, nil
 }
 
-// Helper methods
+func (e *WorkflowEngine) executeLoop(ctx context.Context, loopNodeID uuid.UUID) error {
+	e.mu.RLock()
+	loopOutputs := e.nodeOutputs[loopNodeID]
+	e.mu.RUnlock()
 
-func (e *WorkflowEngine) findStartNodes() []uuid.UUID {
-	// Nodes with no incoming edges
-	incoming := make(map[uuid.UUID]bool)
-	for _, edge := range e.Edges {
-		incoming[edge.TargetNodeID] = true
+	itemsInterface, ok := loopOutputs["items"]
+	if !ok {
+		return nil
 	}
 
+	items, err := toSliceInterface(itemsInterface)
+	if err != nil {
+		return fmt.Errorf("invalid items type: %v", err)
+	}
+
+	subNodes, subEdges := e.getSubgraph(loopNodeID, "output_item")
+	if len(subNodes) == 0 {
+		return nil 
+	}
+
+	var wg sync.WaitGroup
+	errCh := make(chan error, len(items))
+
+	for i, item := range items {
+		wg.Add(1)
+		go func(index int, loopItem interface{}) {
+			defer wg.Done()
+			
+			var nodesList []domain.WorkflowNode
+			for _, n := range subNodes {
+				nodesList = append(nodesList, n)
+			}
+
+			subEngine := NewWorkflowEngine(nodesList, subEdges, e.RunID, e.WorkflowID, e.LogRepo, e.RunRepo)
+			subEngine.isSubEngine = true
+			
+			subEngine.mu.Lock()
+			subEngine.nodeOutputs[loopNodeID] = map[string]interface{}{
+				"output_item": loopItem,
+				"index":       index,
+			}
+			subEngine.mu.Unlock()
+
+			if err := subEngine.Execute(ctx); err != nil {
+				errCh <- fmt.Errorf("iteration %d failed: %w", index, err)
+			}
+		}(i, item)
+	}
+
+	wg.Wait()
+	close(errCh)
+
+	var errs []error
+	for err := range errCh {
+		errs = append(errs, err)
+	}
+	if len(errs) > 0 {
+		return errors.Join(errs...)
+	}
+
+	return nil
+}
+
+func (e *WorkflowEngine) getSubgraph(startNodeID uuid.UUID, startHandle string) (map[uuid.UUID]domain.WorkflowNode, []domain.WorkflowEdge) {
+	subNodes := make(map[uuid.UUID]domain.WorkflowNode)
+	var subEdges []domain.WorkflowEdge
+
+	visitedNodes := make(map[uuid.UUID]bool)
+	queue := []uuid.UUID{}
+
+	for _, edge := range e.Edges {
+		if edge.SourceNodeID == startNodeID && edge.SourceHandle == startHandle {
+			subEdges = append(subEdges, edge)
+			if !visitedNodes[edge.TargetNodeID] {
+				visitedNodes[edge.TargetNodeID] = true
+				queue = append(queue, edge.TargetNodeID)
+				subNodes[edge.TargetNodeID] = e.Nodes[edge.TargetNodeID]
+			}
+		}
+	}
+
+	for len(queue) > 0 {
+		curr := queue[0]
+		queue = queue[1:]
+
+		for _, edge := range e.Edges {
+			if edge.SourceNodeID == curr {
+				subEdges = append(subEdges, edge)
+				if !visitedNodes[edge.TargetNodeID] {
+					visitedNodes[edge.TargetNodeID] = true
+					queue = append(queue, edge.TargetNodeID)
+					subNodes[edge.TargetNodeID] = e.Nodes[edge.TargetNodeID]
+				}
+			}
+		}
+	}
+
+	return subNodes, subEdges
+}
+
+
+func (e *WorkflowEngine) findStartNodes(inDegree map[uuid.UUID]int) []uuid.UUID {
 	var start []uuid.UUID
-	for id := range e.Nodes {
-		if !incoming[id] {
+	for id, count := range inDegree {
+		if count == 0 {
 			start = append(start, id)
 		}
 	}
@@ -296,7 +394,10 @@ func (e *WorkflowEngine) findNextNodes(nodeID uuid.UUID, triggeredHandle string)
 			if triggeredHandle != "" && edge.SourceHandle != triggeredHandle {
 				continue
 			}
-			next = append(next, edge.TargetNodeID)
+			// Only consider targets that exist in the engine (important for subengines)
+			if _, exists := e.Nodes[edge.TargetNodeID]; exists {
+				next = append(next, edge.TargetNodeID)
+			}
 		}
 	}
 	return next
@@ -322,16 +423,47 @@ func (e *WorkflowEngine) updateLog(ctx context.Context, logID uuid.UUID, status 
 }
 
 func (e *WorkflowEngine) failRun(ctx context.Context, msg string) error {
-	now := time.Now()
-	e.RunRepo.UpdateStatus(ctx, e.RunID, domain.WorkflowRunStatusFailed, &now)
+	if !e.isSubEngine {
+		now := time.Now()
+		e.RunRepo.UpdateStatus(ctx, e.RunID, domain.WorkflowRunStatusFailed, &now)
+	}
 	return errors.New(msg)
 }
 
 func (e *WorkflowEngine) logNodeError(ctx context.Context, nodeID uuid.UUID, msg string) {
-	// Try to create a log entry for the error
 	e.LogRepo.Create(ctx, &domain.CreateNodeRunLogRequest{
 		RunID:  e.RunID,
 		NodeID: nodeID,
 		Status: domain.NodeRunLogStatusFailed,
 	})
+}
+
+func toSliceInterface(v interface{}) ([]interface{}, error) {
+	if v == nil {
+		return []interface{}{}, nil
+	}
+	switch val := v.(type) {
+	case []interface{}:
+		return val, nil
+	case []string:
+		res := make([]interface{}, len(val))
+		for i, v := range val {
+			res[i] = v
+		}
+		return res, nil
+	case []int:
+		res := make([]interface{}, len(val))
+		for i, v := range val {
+			res[i] = v
+		}
+		return res, nil
+	default:
+		if s, ok := v.(string); ok {
+			var res []interface{}
+			if err := json.Unmarshal([]byte(s), &res); err == nil {
+				return res, nil
+			}
+		}
+		return nil, fmt.Errorf("input is not a slice or valid JSON array")
+	}
 }
