@@ -29,7 +29,7 @@ func TestCodeJsNode_Execute(t *testing.T) {
 		}
 
 		if result.Status != "completed" {
-			t.Errorf("Expected status completed, got %s", result.Status)
+			t.Fatalf("Expected status completed, got %s. Log: %s", result.Status, result.Log)
 		}
 
 		if result.OutputData["result"] != int64(30) { // goja exports numbers as int64 or float64
@@ -55,7 +55,9 @@ func TestCodeJsNode_Execute(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Expected no error, got %v", err)
 		}
-
+		if result.Status != "completed" {
+			t.Fatalf("Expected status completed, got %s. Log: %s", result.Status, result.Log)
+		}
 		if result.OutputData["message"] != "hello world" {
 			t.Errorf("Expected message 'hello world', got %v", result.OutputData["message"])
 		}

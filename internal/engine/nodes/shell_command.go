@@ -4,10 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os/exec"
 	"strings"
 
 	"github.com/mr-isik/loki-backend/internal/domain"
+	"github.com/mr-isik/loki-backend/internal/engine/docker"
 )
 
 type ShellCommandNode struct{}
@@ -36,13 +36,25 @@ func (n *ShellCommandNode) Execute(ctx context.Context, rawData []byte) (*domain
 		}, fmt.Errorf("command is required")
 	}
 
-	cmd := exec.CommandContext(ctx, data.Command, data.Args...)
-	if data.Dir != "" {
-		cmd.Dir = data.Dir
+	runner, err := docker.NewRunner()
+	if err != nil {
+		return &domain.NodeResult{
+			Status:          "failed",
+			TriggeredHandle: "output_error",
+			Log:             fmt.Sprintf("Failed to initialize Docker runner: %v", err),
+			OutputData: map[string]interface{}{
+				"error": err.Error(),
+			},
+		}, nil
 	}
 
-	output, err := cmd.CombinedOutput()
-	outputStr := string(output)
+	commandArgs := []string{data.Command}
+	commandArgs = append(commandArgs, data.Args...)
+
+	outputStr, err := runner.RunContainer(ctx, docker.RunRequest{
+		Image:   "alpine:latest",
+		Command: commandArgs,
+	})
 
 	if err != nil {
 		return &domain.NodeResult{

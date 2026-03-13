@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/dop251/goja"
 	"github.com/mr-isik/loki-backend/internal/domain"
+	"github.com/mr-isik/loki-backend/internal/engine/docker"
 )
 
 type CodeJsNode struct{}
@@ -26,49 +26,92 @@ func (n *CodeJsNode) Execute(ctx context.Context, rawData []byte) (*domain.NodeR
 		}, err
 	}
 
-	vm := goja.New()
-
-	// Set input variable
-	vm.Set("input", data.Input)
-
-	// Set console.log to capture logs
-	var logs []string
-	vm.Set("console", map[string]interface{}{
-		"log": func(call goja.FunctionCall) goja.Value {
-			var args []interface{}
-			for _, arg := range call.Arguments {
-				args = append(args, arg.Export())
-			}
-			logs = append(logs, fmt.Sprint(args...))
-			return goja.Undefined()
-		},
-	})
-
-	// Run the code
-	val, err := vm.RunString(data.Code)
+	// Initialize Docker runner
+	runner, err := docker.NewRunner()
 	if err != nil {
 		return &domain.NodeResult{
 			Status:          "failed",
 			TriggeredHandle: "output_error",
-			Log:             fmt.Sprintf("JS Execution Error: %v\nLogs: %v", err, logs),
-			OutputData:      map[string]interface{}{"error": err.Error()},
+			Log:             fmt.Sprintf("Failed to initialize Docker runner: %v", err),
+			OutputData: map[string]interface{}{
+				"error": err.Error(),
+			},
 		}, nil
 	}
 
-	output := val.Export()
+	inputJSON, _ := json.Marshal(data.Input)
+	codeJSON, _ := json.Marshal(data.Code) // Safely escape user code for JS eval
+
+	wrapperScript := fmt.Sprintf(`
+const input = %s;
+const _logs = [];
+const _originalLog = console.log;
+console.log = function(...args) {
+    _logs.push(args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' '));
+};
+
+let _error = null;
+let _result = null;
+
+try {
+    _result = eval(%s);
+} catch (err) {
+    _error = err.message || String(err);
+}
+
+process.stdout.write(JSON.stringify({ result: _result, logs: _logs, error: _error }));
+`, string(inputJSON), string(codeJSON))
+
+	outputStr, err := runner.RunContainer(ctx, docker.RunRequest{
+		Image:   "node:alpine",
+		Command: []string{"node", "-e", wrapperScript},
+	})
+
+	if err != nil {
+		return &domain.NodeResult{
+			Status:          "failed",
+			TriggeredHandle: "output_error",
+			Log:             fmt.Sprintf("Node.js Execution Error: %v\nOutput: %s", err, outputStr),
+			OutputData:      map[string]interface{}{"error": err.Error(), "logs": []string{outputStr}},
+		}, nil
+	}
+
+	var parsedOutput struct {
+		Result interface{} `json:"result"`
+		Logs   []string    `json:"logs"`
+		Error  *string     `json:"error"`
+	}
+
+	if err := json.Unmarshal([]byte(outputStr), &parsedOutput); err != nil {
+		return &domain.NodeResult{
+			Status:          "failed",
+			TriggeredHandle: "output_error",
+			Log:             fmt.Sprintf("Failed to parse Node.js output: %v\nRaw Output: %s", err, outputStr),
+			OutputData:      map[string]interface{}{"error": "invalid JSON output from container"},
+		}, nil
+	}
+
+	if parsedOutput.Error != nil {
+		return &domain.NodeResult{
+			Status:          "failed",
+			TriggeredHandle: "output_error",
+			Log:             fmt.Sprintf("JS Execution Error: %s\nLogs: %v", *parsedOutput.Error, parsedOutput.Logs),
+			OutputData:      map[string]interface{}{"error": *parsedOutput.Error},
+		}, nil
+	}
 
 	// If output is not a map, wrap it
 	var outputMap map[string]interface{}
-	if m, ok := output.(map[string]interface{}); ok {
+	if m, ok := parsedOutput.Result.(map[string]interface{}); ok {
 		outputMap = m
 	} else {
-		outputMap = map[string]interface{}{"result": output}
+		outputMap = map[string]interface{}{"result": parsedOutput.Result}
 	}
 
 	return &domain.NodeResult{
 		Status:          "completed",
 		TriggeredHandle: "output_success",
-		Log:             fmt.Sprintf("JS Execution Success. Logs: %v", logs),
+		Log:             fmt.Sprintf("JS Execution Success. Logs: %v", parsedOutput.Logs),
 		OutputData:      outputMap,
 	}, nil
 }

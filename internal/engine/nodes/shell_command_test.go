@@ -12,17 +12,10 @@ func TestShellCommandNode_Execute(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("Echo Command", func(t *testing.T) {
-		// On Windows, "echo" is a shell builtin, so we need "cmd /c echo" or similar.
-		// However, exec.Command often handles this or we can use a simple command like "whoami" or "hostname" if echo fails.
-		// Let's try "cmd /c echo hello world" for Windows compatibility if needed, but "echo" might not work directly with exec.Command on Windows.
-		// Better to use "ping" or something standard, or just "cmd /c echo".
-
 		input := map[string]interface{}{
-			"command": "cmd",
-			"args":    []string{"/c", "echo", "hello world"},
+			"command": "sh",
+			"args":    []string{"-c", "echo hello world"},
 		}
-		// Fallback for non-windows (linux/mac) would be just "echo"
-		// But since user is on Windows, "cmd /c" is safe.
 
 		inputBytes, _ := json.Marshal(input)
 
@@ -32,7 +25,7 @@ func TestShellCommandNode_Execute(t *testing.T) {
 		}
 
 		if result.Status != "completed" {
-			t.Errorf("Expected status completed, got %s", result.Status)
+			t.Fatalf("Expected status completed, got %s. Log: %s", result.Status, result.Log)
 		}
 
 		output := result.OutputData["output"].(string)
